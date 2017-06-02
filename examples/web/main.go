@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"os"
 
-	"master"
+	"github.com/acl-dev/go-master"
 )
 
 func handler(w http.ResponseWriter, r *http.Request) {
