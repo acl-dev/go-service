@@ -52,7 +52,8 @@ go 语言开发的服务器模板，可与 acl_master 服务器框架深度集�
         flag.BoolVar(&runAlone, "alone", false, "stand alone running")
         flag.StringVar(&listenAddr, "listen", "127.0.0.1:8880", "listen addr in alone running")
 
-	flag.Parse()
+        flag.Parse()
+
         master.OnClose(onClose)
         master.OnAccept(onAccept)
 

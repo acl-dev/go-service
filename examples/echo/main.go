@@ -36,6 +36,7 @@ func main() {
 	flag.StringVar(&filePath, "c", "dummy.cf", "configure filePath")
 	flag.BoolVar(&runAlone, "alone", false, "stand alone running")
 	flag.StringVar(&listenAddr, "listen", "127.0.0.1:8880", "listen addr in alone running")
+
 	flag.Parse()
 
 	fmt.Printf("filePath=%s, MasterServiceType=%s\r\n", filePath, master.MasterServiceType)
