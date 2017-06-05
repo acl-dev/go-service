@@ -1,6 +1,7 @@
 package master
 
 import (
+	"flag"
 	"log"
 	"net"
 	"os"
