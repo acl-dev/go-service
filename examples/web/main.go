@@ -1,9 +1,9 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net/http"
-	"os"
 
 	"github.com/acl-dev/go-master"
 )
@@ -15,16 +15,27 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hello World!\r\n")
 }
 
+var (
+	filePath   string
+	runAlone   bool
+	listenAddr string
+)
+
 func main() {
+	flag.StringVar(&filePath, "c", "dummy.cf", "configure filePath")
+	flag.BoolVar(&runAlone, "alone", false, "stand alone running")
+	flag.StringVar(&listenAddr, "listen", "127.0.0.1:8880", "listen addr in alone running")
+	flag.Parse()
+
 	http.HandleFunc("/", handler)
 
-	if len(os.Args) > 1 && os.Args[1] == "alone" {
+	if runAlone {
 		addrs := make([]string, 1)
-		if len(os.Args) > 2 {
-			addrs = append(addrs, os.Args[2])
-		} else {
-			addrs = append(addrs, "127.0.0.1:8880")
+		if len(listenAddr) == 0 {
+			panic("listenAddr null")
 		}
+
+		addrs = append(addrs, listenAddr)
 
 		fmt.Printf("listen:")
 		for _, addr := range addrs {
