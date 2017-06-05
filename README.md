@@ -15,6 +15,7 @@ go 语言开发的服务器模板，可与 acl_master 服务器框架深度集�
     package main
 
     import (
+        "flag"
         "fmt"
         "log"
         "net"
@@ -40,17 +41,28 @@ go 语言开发的服务器模板，可与 acl_master 服务器框架深度集�
         log.Println("---client onClose---")
     }
 
+    var (
+        filePath   string
+        runAlone   bool
+        listenAddr string
+    )
+
     func main() {
+        flag.StringVar(&filePath, "c", "dummy.cf", "configure filePath")
+        flag.BoolVar(&runAlone, "alone", false, "stand alone running")
+        flag.StringVar(&listenAddr, "listen", "127.0.0.1:8880", "listen addr in alone running")
+
+	flag.Parse()
         master.OnClose(onClose)
         master.OnAccept(onAccept)
 
-        if len(os.Args) > 1 && os.Args[1] == "alone" {
+        if runAlone {
             addrs := make([]string, 1)
-            if len(os.Args) > 2 {
-                addrs = append(addrs, os.Args[2])
-            } else {
-                addrs = append(addrs, "127.0.0.1:8880")
+            if len(listenAddr) == 0 {
+                panic("listenAddr null")
             }
+
+            addrs = append(addrs, listenAddr)
 
             fmt.Printf("listen:")
             for _, addr := range addrs {
