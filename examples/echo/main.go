@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"net"
@@ -31,6 +32,12 @@ func main() {
 	master.OnAccept(onAccept)
 
 	if len(os.Args) > 1 && os.Args[1] == "alone" {
+		var filePath string
+		flag.StringVar(&filePath, "c", "dummy.cf", "configure filePath")
+		flag.Parse()
+
+		fmt.Printf("filePath=%s, MasterServiceType=%s\r\n",
+			filePath, master.MasterServiceType)
 		addrs := make([]string, 1)
 		if len(os.Args) > 2 {
 			addrs = append(addrs, os.Args[2])

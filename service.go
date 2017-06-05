@@ -48,6 +48,26 @@ var (
 	rootDir    string
 )
 
+var (
+	MasterConfigure    string
+	MasterServiceName  string
+	MasterServiceType  string
+	MasterVerbose      bool
+	MasterUnprivileged bool
+	//	MasterChroot       bool
+	MasterSocketCount int = 1
+)
+
+func init() {
+	flag.StringVar(&MasterConfigure, "f", "", "app configure file")
+	flag.StringVar(&MasterServiceName, "n", "", "app service name")
+	flag.StringVar(&MasterServiceType, "t", "sock", "app service type")
+	flag.BoolVar(&MasterVerbose, "v", false, "app verbose")
+	flag.BoolVar(&MasterUnprivileged, "u", false, "app unprivileged")
+	//	flag.BoolVar(&MasterChroot, "c", false, "app chroot")
+	flag.IntVar(&MasterSocketCount, "s", 1, "listen fd count")
+}
+
 func parseArgs() {
 	/*
 		flag.IntVar(&listenFdCount, "s", 1, "listen fd count")
