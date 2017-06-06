@@ -87,31 +87,27 @@ func parseArgs() {
 		switch os.Args[i] {
 		case "-s":
 			i++
-			if i >= n {
-				break
-			}
-			listenFdCount, _ = strconv.Atoi(os.Args[i])
-			if listenFdCount <= 0 {
-				listenFdCount = 1
+			if i < n {
+				listenFdCount, _ = strconv.Atoi(os.Args[i])
+				if listenFdCount <= 0 {
+					listenFdCount = 1
+				}
 			}
 		case "-f":
 			i++
-			if i >= n {
-				break
+			if i < n {
+				confPath = os.Args[i]
 			}
-			confPath = os.Args[i]
 		case "-t":
 			i++
-			if i >= n {
-				break
+			if i < n {
+				sockType = os.Args[i]
 			}
-			sockType = os.Args[i]
 		case "-n":
 			i++
-			if i >= n {
-				break
+			if i < n {
+				services = os.Args[i]
 			}
-			services = os.Args[i]
 		case "-u":
 			privilege = true
 		case "-v":
