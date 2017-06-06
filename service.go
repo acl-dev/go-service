@@ -57,12 +57,14 @@ var (
 	MasterUnprivileged bool
 	//	MasterChroot       bool
 	MasterSocketCount int = 1
+	Alone             bool
 )
 
 func init() {
 	flag.StringVar(&MasterConfigure, "f", "", "app configure file")
 	flag.StringVar(&MasterServiceName, "n", "", "app service name")
 	flag.StringVar(&MasterServiceType, "t", "sock", "app service type")
+	flag.BoolVar(&Alone, "alone", false, "stand alone running")
 	flag.BoolVar(&MasterVerbose, "v", false, "app verbose")
 	flag.BoolVar(&MasterUnprivileged, "u", false, "app unprivileged")
 	//	flag.BoolVar(&MasterChroot, "c", false, "app chroot")
