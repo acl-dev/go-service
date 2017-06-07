@@ -154,7 +154,7 @@ func Prepare() {
 	AppWaitLimit = conf.GetInt("app_wait_limit")
 	AppAccessAllow = conf.GetString("app_access_allow")
 
-	log.Printf("Args: %s\r\n", MasterArgs)
+	log.Printf("Args: %s, AppAccessAllow: %s\r\n", MasterArgs, AppAccessAllow)
 }
 
 func chroot() {

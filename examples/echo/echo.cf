@@ -38,9 +38,9 @@ service echo {
 #	预启动进程数，该值不得大于 master_maxproc
 	master_prefork = 1
 #	进程程序名
-	master_command = $<PROGRAM>
+	master_command = echo
 #	进程日志记录文件
-	master_log = {install_path}/var/log/$<PROGRAM>
+	master_log = echo.log
 #	进程运行时的用户身份
 #	master_owner = root
 #	调试日志方式，格式：tag:level; tag:level; tab:level, 如：all:1; 101:2
@@ -56,7 +56,7 @@ service echo {
 #	每个进程实例的空闲超时时间，超过此值后进程实例主动退出
 	app_idle_limit = 0
 #	进程运行时所在的路径
-	app_queue_dir = {install_path}/var
+	app_queue_dir = ./
 
 #	当启用 master_dispatch 连接分开服务后，该配置指定 master_dispatch 所监听的
 #	域套接口的全路径，这样本子进程就可以从 master_dispatch 获得客户端连接
@@ -66,7 +66,7 @@ service echo {
 
 #	允许访问 udserver 的客户端IP地址范围
 #	app_access_allow = 127.0.0.1:255.255.255.255, 127.0.0.1:127.0.0.1
-#	app_access_allow = all
+	app_access_allow = all
 
 #	当 acl_master 退出时，如果该值置1则该程序不等所有连接处理完毕便立即退出
 	app_quick_abort = 0
