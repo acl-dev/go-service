@@ -40,17 +40,24 @@ var (
 	connCount      int         = 0
 	connMutex      sync.RWMutex
 	stopping       bool = false
-	waitExit       int  = 10
 	prepareCalled  bool = false
 )
 
+// from configure file of the app
 var (
-	logPath    string
-	username   string
-	masterArgs string
-	rootDir    string
+	MasterService  string
+	MasterLogPath  string
+	MasterOwner    string
+	MasterArgs     string
+	AppRootDir     string
+	AppUseLimit    int    = 0
+	AppIdleLimit   int    = 0
+	AppQuickAbort  bool   = false
+	AppWaitLimit   int    = 10
+	AppAccessAllow string = "all"
 )
 
+// from command args
 var (
 	MasterConfigure    string
 	MasterServiceName  string
@@ -125,32 +132,39 @@ func Prepare() {
 	conf := new(Config)
 	conf.InitConfig(confPath)
 
-	logPath = conf.Get("master_log")
-	if len(logPath) > 0 {
-		f, err := os.OpenFile(logPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+	MasterLogPath = conf.GetString("master_log")
+	if len(MasterLogPath) > 0 {
+		f, err := os.OpenFile(MasterLogPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 		if err != nil {
-			fmt.Printf("OpenFile %s error %s", logPath, err)
+			fmt.Printf("OpenFile %s error %s", MasterLogPath, err)
 		} else {
 			log.SetOutput(f)
 			//log.SetOutput(io.MultiWriter(os.Stderr, f))
 		}
 	}
 
-	masterArgs = conf.Get("master_args")
-	username = conf.Get("fiber_owner")
-	rootDir = conf.Get("fiber_queue_dir")
+	MasterService = conf.GetString("master_service")
+	MasterOwner = conf.GetString("master_owner")
+	MasterArgs = conf.GetString("master_args")
 
-	log.Printf("Args: %s\r\n", masterArgs)
+	AppRootDir = conf.GetString("app_queue_dir")
+	AppUseLimit = conf.GetInt("app_use_limit")
+	AppIdleLimit = conf.GetInt("app_idle_limit")
+	AppQuickAbort = conf.GetBool("app_quick_abort")
+	AppWaitLimit = conf.GetInt("app_wait_limit")
+	AppAccessAllow = conf.GetString("app_access_allow")
+
+	log.Printf("Args: %s\r\n", MasterArgs)
 }
 
 func chroot() {
-	if len(masterArgs) == 0 || !privilege || len(username) == 0 {
+	if len(MasterArgs) == 0 || !privilege || len(MasterOwner) == 0 {
 		return
 	}
 
-	user, err := user.Lookup(username)
+	user, err := user.Lookup(MasterOwner)
 	if err != nil {
-		log.Printf("Lookup %s error %s", username, err)
+		log.Printf("Lookup %s error %s", MasterOwner, err)
 	} else {
 		gid, err := strconv.Atoi(user.Gid)
 		if err != nil {
@@ -171,12 +185,12 @@ func chroot() {
 		}
 	}
 
-	if chrootOn && len(rootDir) > 0 {
-		err := syscall.Chroot(rootDir)
+	if chrootOn && len(AppRootDir) > 0 {
+		err := syscall.Chroot(AppRootDir)
 		if err != nil {
-			log.Printf("Chroot error %s, path %s", err, rootDir)
+			log.Printf("Chroot error %s, path %s", err, AppRootDir)
 		} else {
-			log.Printf("Chroot ok, path %s", rootDir)
+			log.Printf("Chroot ok, path %s", AppRootDir)
 			err := syscall.Chdir("/")
 			if err != nil {
 				log.Printf("Chdir error %s", err)
@@ -260,8 +274,8 @@ func monitorMaster(listeners []*net.Listener,
 		time.Sleep(time.Second) // sleep 1 second
 		i++
 		log.Printf("exiting, clients=%d, sleep=%d seconds", n, i)
-		if waitExit > 0 && i >= waitExit {
-			log.Printf("waiting too long >= %d", waitExit)
+		if AppWaitLimit > 0 && i >= AppWaitLimit {
+			log.Printf("waiting too long >= %d", AppWaitLimit)
 			break
 		}
 	}
