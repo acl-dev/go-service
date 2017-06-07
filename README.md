@@ -43,21 +43,20 @@ go 语言开发的服务器模板，可与 acl_master 服务器框架深度集�
 
     var (
         filePath   string
-        runAlone   bool
         listenAddr string
     )
 
     func main() {
         flag.StringVar(&filePath, "c", "dummy.cf", "configure filePath")
-        flag.BoolVar(&runAlone, "alone", false, "stand alone running")
         flag.StringVar(&listenAddr, "listen", "127.0.0.1:8880", "listen addr in alone running")
 
         flag.Parse()
 
+        master.Prepare()
         master.OnClose(onClose)
         master.OnAccept(onAccept)
 
-        if runAlone {
+        if master.Alone {
             addrs := make([]string, 1)
             if len(listenAddr) == 0 {
                 panic("listenAddr null")
