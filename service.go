@@ -2,6 +2,7 @@ package master
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"net"
 	"os"
@@ -40,6 +41,7 @@ var (
 	connMutex      sync.RWMutex
 	stopping       bool = false
 	waitExit       int  = 10
+	prepareCalled  bool = false
 )
 
 var (
@@ -72,18 +74,6 @@ func init() {
 }
 
 func parseArgs() {
-	/*
-		flag.IntVar(&listenFdCount, "s", 1, "listen fd count")
-		flag.StringVar(&confPath, "f", "", "configure path")
-		flag.StringVar(&sockType, "t", "sock", "socket type")
-		flag.StringVar(&services, "n", "", "master services")
-		flag.BoolVar(&privilege, "u", false, "running privilege")
-		flag.BoolVar(&verbose, "v", false, "debug verbose")
-		flag.BoolVar(&chrootOn, "c", false, "chroot dir")
-
-		flag.Parse()
-	*/
-
 	var n = len(os.Args)
 	for i := 0; i < n; i++ {
 		switch os.Args[i] {
@@ -123,7 +113,13 @@ func parseArgs() {
 		listenFdCount, sockType, services)
 }
 
-func prepare() {
+func Prepare() {
+	if prepareCalled {
+		return
+	} else {
+		prepareCalled = true
+	}
+
 	parseArgs()
 
 	conf := new(Config)
@@ -131,10 +127,9 @@ func prepare() {
 
 	logPath = conf.Get("master_log")
 	if len(logPath) > 0 {
-		f, err := os.OpenFile(logPath,
-			os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+		f, err := os.OpenFile(logPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 		if err != nil {
-			log.Println("OpenFile error", err)
+			fmt.Printf("OpenFile %s error %s", logPath, err)
 		} else {
 			log.SetOutput(f)
 			//log.SetOutput(io.MultiWriter(os.Stderr, f))
@@ -197,7 +192,7 @@ func getListenersByAddrs(addrs []string) []*net.Listener {
 	for _, addr := range addrs {
 		ln, err := net.Listen("tcp", addr)
 		if err != nil {
-			panic("listen error")
+			panic(fmt.Sprintf("listen error=\"%s\", addr=%s", err, addr))
 		}
 		listeners = append(listeners, &ln)
 	}
@@ -207,10 +202,11 @@ func getListenersByAddrs(addrs []string) []*net.Listener {
 func getListeners() []*net.Listener {
 	listeners := []*net.Listener(nil)
 	for fd := listenFdStart; fd < listenFdStart+listenFdCount; fd++ {
-		file := os.NewFile(uintptr(fd), "one listenfd")
+		file := os.NewFile(uintptr(fd), "open one listenfd")
 		ln, err := net.FileListener(file)
 		if err != nil {
-			log.Println("create FileListener error", err)
+			file.Close()
+			log.Println(fmt.Sprintf("create FileListener error=\"%s\", fd=%d", err, fd))
 			continue
 		}
 		listeners = append(listeners, &ln)
@@ -223,17 +219,17 @@ func monitorMaster(listeners []*net.Listener,
 	onStopHandler func(), stopHandler func(bool)) {
 
 	file := os.NewFile(uintptr(stateFd), "")
-	conn, err1 := net.FileConn(file)
-	if err1 != nil {
-		log.Println("FileConn error", err1)
+	conn, err := net.FileConn(file)
+	if err != nil {
+		log.Println("FileConn error", err)
 	}
 
 	log.Println("waiting master exiting ...")
 
 	buf := make([]byte, 1024)
-	_, err2 := conn.Read(buf)
-	if err2 != nil {
-		log.Println("disconnected from master", err2)
+	_, err = conn.Read(buf)
+	if err != nil {
+		log.Println("disconnected from master", err)
 	}
 
 	var n, i int
@@ -258,6 +254,7 @@ func monitorMaster(listeners []*net.Listener,
 			connMutex.RUnlock()
 			break
 		}
+
 		n = connCount
 		connMutex.RUnlock()
 		time.Sleep(time.Second) // sleep 1 second
