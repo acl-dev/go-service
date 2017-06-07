@@ -28,7 +28,6 @@ func onClose(conn net.Conn) {
 
 var (
 	filePath   string
-	runAlone   bool
 	listenAddr string
 )
 
@@ -38,12 +37,14 @@ func main() {
 
 	flag.Parse()
 
+	master.Prepare()
+
 	fmt.Printf("filePath=%s, MasterServiceType=%s\r\n", filePath, master.MasterServiceType)
 
 	master.OnClose(onClose)
 	master.OnAccept(onAccept)
 
-	if runAlone {
+	if master.Alone {
 		addrs := make([]string, 1)
 		if len(listenAddr) == 0 {
 			panic("listenAddr null")

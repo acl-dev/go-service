@@ -17,7 +17,6 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 var (
 	filePath   string
-	runAlone   bool
 	listenAddr string
 )
 
@@ -26,9 +25,11 @@ func main() {
 	flag.StringVar(&listenAddr, "listen", "127.0.0.1:8880", "listen addr in alone running")
 	flag.Parse()
 
+	master.Prepare()
+
 	http.HandleFunc("/", handler)
 
-	if runAlone {
+	if master.Alone {
 		addrs := make([]string, 1)
 		if len(listenAddr) == 0 {
 			panic("listenAddr null")
