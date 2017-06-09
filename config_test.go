@@ -8,9 +8,9 @@ func TestConfig(t *testing.T) {
 	myConf.InitConfig(confFile)
 
 	expectLogfile := "/opt/soft/acl-master/var/log/aio_echo.log"
-	if myConf.Get("master_log") != expectLogfile {
+	if myConf.GetString("master_log") != expectLogfile {
 		t.Fatalf("Got: %s, Expect: %s",
-			myConf.Get("master_log"),
+			myConf.GetString("master_log"),
 			expectLogfile,
 		)
 	}
