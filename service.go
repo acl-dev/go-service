@@ -69,7 +69,29 @@ var (
 	Alone             bool
 )
 
-func init() {
+// set the max opened file handles for current process which let
+// the process can handle more connections.
+func setOpenMax() {
+	var rlim syscall.Rlimit
+	err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rlim)
+	if err != nil {
+		fmt.Println("get rlimit error: " + err.Error())
+		return
+	}
+	if rlim.Max <= 0 {
+		rlim.Max = 100000
+	}
+	rlim.Cur = rlim.Max
+
+	err = syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rlim)
+	if err != nil {
+		fmt.Println("set rlimit error: " + err.Error())
+	}
+}
+
+// init the command args come from acl_master; the application should call
+// flag.Parse() in its main function!
+func initFlags() {
 	flag.StringVar(&MasterConfigure, "f", "", "app configure file")
 	flag.StringVar(&MasterServiceName, "n", "", "app service name")
 	flag.StringVar(&MasterServiceType, "t", "sock", "app service type")
@@ -78,6 +100,11 @@ func init() {
 	flag.BoolVar(&MasterUnprivileged, "u", false, "app unprivileged")
 	//	flag.BoolVar(&MasterChroot, "c", false, "app chroot")
 	flag.IntVar(&MasterSocketCount, "s", 1, "listen fd count")
+}
+
+func init() {
+	initFlags()
+	setOpenMax()
 }
 
 func parseArgs() {
@@ -120,6 +147,9 @@ func parseArgs() {
 		listenFdCount, sockType, services)
 }
 
+// this function can be called automatically in net_service.go or
+// web_service.go to load configure, and it can also be canned in appliction's
+// main function
 func Prepare() {
 	if prepareCalled {
 		return
@@ -201,6 +231,8 @@ func chroot() {
 	}
 }
 
+// In run alone mode, the application should give the listening addrs and call
+// this function to listen the given addrs
 func getListenersByAddrs(addrs []string) []*net.Listener {
 	listeners := []*net.Listener(nil)
 	for _, addr := range addrs {
@@ -213,22 +245,27 @@ func getListenersByAddrs(addrs []string) []*net.Listener {
 	return listeners
 }
 
+// In acl_master daemon running mode, this function will be called for init
+// the listener handles.
 func getListeners() []*net.Listener {
 	listeners := []*net.Listener(nil)
 	for fd := listenFdStart; fd < listenFdStart+listenFdCount; fd++ {
 		file := os.NewFile(uintptr(fd), "open one listenfd")
 		ln, err := net.FileListener(file)
-		if err != nil {
-			file.Close()
-			log.Println(fmt.Sprintf("create FileListener error=\"%s\", fd=%d", err, fd))
+		if err == nil {
+			listeners = append(listeners, &ln)
+			log.Printf("add fd: %d", fd)
 			continue
 		}
-		listeners = append(listeners, &ln)
-		log.Printf("add fd: %d", fd)
+		file.Close()
+		log.Println(fmt.Sprintf("create FileListener error=\"%s\", fd=%d", err, fd))
 	}
 	return listeners
 }
 
+// monitor the PIPE IPC between the current process and acl_master,
+// when acl_master close thePIPE, the current process should exit after
+// which has handled all its tasks
 func monitorMaster(listeners []*net.Listener,
 	onStopHandler func(), stopHandler func(bool)) {
 

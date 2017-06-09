@@ -1,3 +1,8 @@
+
+3) 2017.6.9
+3.1) feature when application running in acl_master daemon mode, file handles
+was limited to 1024, so reset the max opening files.
+
 2) 2017.5.23
 2.1) rename prepare to Prepare
 2.2) add configure entries for app in master framework
