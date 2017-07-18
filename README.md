@@ -2,13 +2,13 @@
 
 
 # go-master
+
 go 语言开发的服务器模板，可与 acl_master 服务器框架深度集成。
 
 
 ## 安装
 
 	go get -u github.com/acl-dev/go-master
-
 
 ## 使用
 
@@ -78,6 +78,4 @@ go 语言开发的服务器模板，可与 acl_master 服务器框架深度集�
     }
 
 
-更多请参考[example](https://github.com/acl-dev/go-master/tree/master/examples/)
-
-
+更多请参考[examples](https://github.com/acl-dev/go-master/tree/master/examples/)
