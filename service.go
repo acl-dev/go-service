@@ -7,7 +7,9 @@ import (
 	"net"
 	"os"
 	"os/user"
+	"runtime"
 	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -55,6 +57,7 @@ var (
 	AppQuickAbort  bool   = false
 	AppWaitLimit   int    = 10
 	AppAccessAllow string = "all"
+	Appthreads     int    = 0
 )
 
 // from command args
@@ -183,6 +186,10 @@ func Prepare() {
 	AppQuickAbort = conf.GetBool("app_quick_abort")
 	AppWaitLimit = conf.GetInt("app_wait_limit")
 	AppAccessAllow = conf.GetString("app_access_allow")
+	Appthreads = conf.GetInt("app_threads")
+	if Appthreads > 0 {
+		runtime.GOMAXPROCS(Appthreads)
+	}
 
 	log.Printf("Args: %s, AppAccessAllow: %s\r\n", MasterArgs, AppAccessAllow)
 }
@@ -233,18 +240,26 @@ func chroot() {
 
 // In run alone mode, the application should give the listening addrs and call
 // this function to listen the given addrs
-func getListenersByAddrs(addrs []string) []*net.Listener {
+func getListenersByAddrs(addrs string) []*net.Listener {
 	if len(addrs) == 0 {
 		panic("no valid addrs for listening")
 	}
 
+	// split addrs like "xxx.xxx.xxx.xxx:port; xxx.xxx.xxx.xxx:port"
+
+	addrs = strings.Replace(addrs, " ", "", -1)
+	addrs = strings.Replace(addrs, ",", ";", -1)
+	tokens := strings.Split(addrs, ";")
+
 	listeners := []*net.Listener(nil)
-	for _, addr := range addrs {
+	for _, addr := range tokens {
 		ln, err := net.Listen("tcp", addr)
-		if err != nil {
-			panic(fmt.Sprintf("listen error=\"%s\", addr=%s", err, addr))
+		if err == nil {
+			listeners = append(listeners, &ln)
+			continue
 		}
-		listeners = append(listeners, &ln)
+
+		panic(fmt.Sprintf("listen error=\"%s\", addr=%s", err, addr))
 	}
 	return listeners
 }
@@ -266,7 +281,7 @@ func getListeners() []*net.Listener {
 	}
 
 	if len(listeners) == 0 {
-		panic("no listener created!");
+		panic("no listener created!")
 	}
 	return listeners
 }
@@ -280,7 +295,7 @@ func monitorMaster(listeners []*net.Listener,
 	file := os.NewFile(uintptr(stateFd), "")
 	conn, err := net.FileConn(file)
 	if err != nil {
-		log.Println("FileConn error", err)
+		panic(fmt.Sprintf("FileConn error=%s", err))
 	}
 
 	log.Println("waiting master exiting ...")
@@ -290,10 +305,6 @@ func monitorMaster(listeners []*net.Listener,
 	if err != nil {
 		log.Println("disconnected from master", err)
 	}
-
-	var n, i int
-	n = 0
-	i = 0
 
 	stopping = true
 
@@ -306,6 +317,10 @@ func monitorMaster(listeners []*net.Listener,
 			(*ln).Close()
 		}
 	}
+
+	var n, i int
+	n = 0
+	i = 0
 
 	for {
 		connMutex.RLock()
@@ -327,7 +342,9 @@ func monitorMaster(listeners []*net.Listener,
 
 	log.Println("master disconnected, exiting now")
 
-	stopHandler(true)
+	if stopHandler != nil {
+		stopHandler(true)
+	}
 }
 
 func connCountInc() {

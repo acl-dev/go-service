@@ -23,7 +23,7 @@ func webServ(ln net.Listener, daemon bool) {
 }
 
 // start WEB service with the specified listening addrs
-func WebStart(addrs []string) {
+func WebStart(addrs string) {
 	Prepare()
 
 	if preJailHandler != nil {
@@ -37,7 +37,7 @@ func WebStart(addrs []string) {
 	}
 
 	var listeners []*net.Listener
-	if addrs != nil && len(addrs) > 0 {
+	if len(addrs) > 0 {
 		listeners = getListenersByAddrs(addrs)
 		daemonMode = false
 	} else {

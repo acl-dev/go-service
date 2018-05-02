@@ -16,13 +16,13 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 var (
-	filePath   string
-	listenAddr string
+	filePath    string
+	listenAddrs string
 )
 
 func main() {
 	flag.StringVar(&filePath, "c", "dummy.cf", "configure filePath")
-	flag.StringVar(&listenAddr, "listen", "127.0.0.1:8880", "listen addr in alone running")
+	flag.StringVar(&listenAddrs, "listen", "127.0.0.1:8880", "listen addr in alone running")
 	flag.Parse()
 
 	master.Prepare()
@@ -30,22 +30,10 @@ func main() {
 	http.HandleFunc("/", handler)
 
 	if master.Alone {
-		addrs := make([]string, 1)
-		if len(listenAddr) == 0 {
-			panic("listenAddr null")
-		}
-
-		addrs = append(addrs, listenAddr)
-
-		fmt.Printf("listen:")
-		for _, addr := range addrs {
-			fmt.Printf(" %s", addr)
-		}
-		fmt.Println()
-
-		master.WebStart(addrs)
+		fmt.Println("listen: ", listenAddrs)
+		master.WebStart(listenAddrs)
 	} else {
 		// daemon mode in master framework
-		master.WebStart(nil)
+		master.WebStart("")
 	}
 }

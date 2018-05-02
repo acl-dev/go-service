@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"time"
 )
 
 type AcceptFunc func(net.Conn)
@@ -40,7 +41,8 @@ func loopAccept(ln net.Listener) {
 		conn, err := ln.Accept()
 		if err != nil {
 			log.Println("Accept error", err)
-			break
+			time.Sleep(1000 * time.Millisecond)
+			continue
 		}
 
 		go handleConn(conn)
@@ -67,7 +69,7 @@ func OnClose(handler CloseFunc) {
 }
 
 // start TCP service with the specified listening addrs
-func TcpStart(addrs []string) {
+func TcpStart(addrs string) {
 	Prepare()
 
 	if preJailHandler != nil {
@@ -80,9 +82,12 @@ func TcpStart(addrs []string) {
 		initHandler()
 	}
 
+	// if addrs not empty, alone mode will be used, or daemon mode be used
+
 	var daemon bool
 	var listeners []*net.Listener
-	if addrs != nil && len(addrs) > 0 {
+
+	if len(addrs) > 0 {
 		listeners = getListenersByAddrs(addrs)
 		daemon = false
 	} else {
@@ -95,14 +100,20 @@ func TcpStart(addrs []string) {
 	}
 
 	for _, ln := range listeners {
+		// create fiber for each listener to accept connections
 		go loopAccept(*ln)
 	}
+
+	// if in daemon mode, the backend monitor fiber will be created for
+	// monitoring the status with the acl_master framework
 
 	if daemon {
 		go monitorMaster(listeners, nil, tcpStop)
 	}
 
 	log.Println("service started!")
+
+	// waiting for service stopped
 	res := <-doneChan
 
 	close(doneChan)
@@ -119,8 +130,10 @@ func TcpStart(addrs []string) {
 	}
 }
 
-func tcpStop(n bool) {
+// callback when service stopped, be called in service.go
+func tcpStop(ok bool) {
 	if doneChan != nil {
-		doneChan <- n
+		// notify the main fiber to exit now
+		doneChan <- ok
 	}
 }
