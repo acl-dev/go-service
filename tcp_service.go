@@ -50,7 +50,7 @@ func loopAccept(ln net.Listener) {
 		log.Println("server stopping")
 	} else {
 		log.Println("server listen error")
-		netStop(false)
+		tcpStop(false)
 	}
 }
 
@@ -66,7 +66,8 @@ func OnClose(handler CloseFunc) {
 	closeHandler = handler
 }
 
-func NetStart(addrs []string) {
+// start TCP service with the specified listening addrs
+func TcpStart(addrs []string) {
 	Prepare()
 
 	if preJailHandler != nil {
@@ -98,7 +99,7 @@ func NetStart(addrs []string) {
 	}
 
 	if daemon {
-		go monitorMaster(listeners, nil, netStop)
+		go monitorMaster(listeners, nil, tcpStop)
 	}
 
 	log.Println("service started!")
@@ -118,7 +119,7 @@ func NetStart(addrs []string) {
 	}
 }
 
-func netStop(n bool) {
+func tcpStop(n bool) {
 	if doneChan != nil {
 		doneChan <- n
 	}

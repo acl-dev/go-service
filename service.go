@@ -234,6 +234,10 @@ func chroot() {
 // In run alone mode, the application should give the listening addrs and call
 // this function to listen the given addrs
 func getListenersByAddrs(addrs []string) []*net.Listener {
+	if len(addrs) == 0 {
+		panic("no valid addrs for listening")
+	}
+
 	listeners := []*net.Listener(nil)
 	for _, addr := range addrs {
 		ln, err := net.Listen("tcp", addr)
@@ -259,6 +263,10 @@ func getListeners() []*net.Listener {
 		}
 		file.Close()
 		log.Println(fmt.Sprintf("create FileListener error=\"%s\", fd=%d", err, fd))
+	}
+
+	if len(listeners) == 0 {
+		panic("no listener created!");
 	}
 	return listeners
 }

@@ -22,6 +22,7 @@ func webServ(ln net.Listener, daemon bool) {
 	serv.Serve(ln)
 }
 
+// start WEB service with the specified listening addrs
 func WebStart(addrs []string) {
 	Prepare()
 

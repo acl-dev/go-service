@@ -58,9 +58,9 @@ func main() {
 		}
 		fmt.Println()
 
-		master.NetStart(addrs)
+		master.TcpStart(addrs)
 	} else {
 		// daemon mode in master framework
-		master.NetStart(nil)
+		master.TcpStart(nil)
 	}
 }
