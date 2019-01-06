@@ -1,4 +1,7 @@
 
+5) 2019.1.6
+5.1) bugfix: file should be closed after listner is created in service::getListeners
+
 4) 2018.5.2
 4.1) feature: threads count can be specified in services' configure
 4.2) workaroud: rename net_service.go to tcp_service.go

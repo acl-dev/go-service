@@ -270,18 +270,28 @@ func getListeners() []*net.Listener {
 	listeners := []*net.Listener(nil)
 	for fd := listenFdStart; fd < listenFdStart+listenFdCount; fd++ {
 		file := os.NewFile(uintptr(fd), "open one listenfd")
+		if file == nil {
+			log.Printf("os.NewFile failed for fd=%d", fd)
+			continue
+		}
+
+		// fd will be dupped in FileListener, so we should close it
+		// after the listener is created
+		defer file.Close()
+
 		ln, err := net.FileListener(file)
 		if err == nil {
 			listeners = append(listeners, &ln)
-			log.Printf("add fd: %d", fd)
+			log.Printf("Add fd %d ok", fd)
 			continue
 		}
-		file.Close()
 		log.Println(fmt.Sprintf("create FileListener error=\"%s\", fd=%d", err, fd))
 	}
 
 	if len(listeners) == 0 {
 		panic("no listener created!")
+	} else {
+		log.Printf("listeners's len=%d", len(listeners))
 	}
 	return listeners
 }
