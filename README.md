@@ -42,13 +42,13 @@ go 语言开发的服务器模板，可与 acl_master 服务器框架深度集�
     }
 
     var (
-        filePath   string
-        listenAddr string
+        filePath    string
+        listenAddrs string
     )
 
     func main() {
         flag.StringVar(&filePath, "c", "dummy.cf", "configure filePath")
-        flag.StringVar(&listenAddr, "listen", "127.0.0.1:8880", "listen addr in alone running")
+        flag.StringVar(&listenAddrs, "listen", "127.0.0.1:8080; 127.0.0.1:8081", "listen addr in alone running")
 
         flag.Parse()
 
@@ -57,20 +57,8 @@ go 语言开发的服务器模板，可与 acl_master 服务器框架深度集�
         master.OnAccept(onAccept)
 
         if master.Alone {
-            addrs := make([]string, 1)
-            if len(listenAddr) == 0 {
-                panic("listenAddr null")
-            }
-
-            addrs = append(addrs, listenAddr)
-
-            fmt.Printf("listen:")
-            for _, addr := range addrs {
-                fmt.Printf(" %s", addr)
-            }
-            fmt.Println()
-
-            master.NetStart(addrs)
+            fmt.Printf("listen: %s\r\n", listenAddrs)
+            master.NetStart(listenAddrs)
         } else {
             // daemon mode in master framework
             master.NetStart(nil)
