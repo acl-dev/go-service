@@ -85,7 +85,7 @@ func TcpStart(addrs string) {
 	// if addrs not empty, alone mode will be used, or daemon mode be used
 
 	var daemon bool
-	var listeners []*net.Listener
+	var listeners []net.Listener
 
 	if len(addrs) > 0 {
 		listeners = getListenersByAddrs(addrs)
@@ -101,7 +101,7 @@ func TcpStart(addrs string) {
 
 	for _, ln := range listeners {
 		// create fiber for each listener to accept connections
-		go loopAccept(*ln)
+		go loopAccept(ln)
 	}
 
 	// if in daemon mode, the backend monitor fiber will be created for

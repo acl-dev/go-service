@@ -240,7 +240,7 @@ func chroot() {
 
 // In run alone mode, the application should give the listening addrs and call
 // this function to listen the given addrs
-func getListenersByAddrs(addrs string) []*net.Listener {
+func getListenersByAddrs(addrs string) []net.Listener {
 	if len(addrs) == 0 {
 		panic("no valid addrs for listening")
 	}
@@ -251,11 +251,12 @@ func getListenersByAddrs(addrs string) []*net.Listener {
 	addrs = strings.Replace(addrs, ",", ";", -1)
 	tokens := strings.Split(addrs, ";")
 
-	listeners := []*net.Listener(nil)
+	listeners := []net.Listener(nil)
 	for _, addr := range tokens {
 		ln, err := net.Listen("tcp", addr)
 		if err == nil {
-			listeners = append(listeners, &ln)
+			listeners = append(listeners, ln)
+			log.Printf("listen %s ok", addr)
 			continue
 		}
 
@@ -266,8 +267,8 @@ func getListenersByAddrs(addrs string) []*net.Listener {
 
 // In acl_master daemon running mode, this function will be called for init
 // the listener handles.
-func getListeners() []*net.Listener {
-	listeners := []*net.Listener(nil)
+func getListeners() []net.Listener {
+	listeners := []net.Listener(nil)
 	for fd := listenFdStart; fd < listenFdStart+listenFdCount; fd++ {
 		file := os.NewFile(uintptr(fd), "open one listenfd")
 		if file == nil {
@@ -281,8 +282,8 @@ func getListeners() []*net.Listener {
 
 		ln, err := net.FileListener(file)
 		if err == nil {
-			listeners = append(listeners, &ln)
-			log.Printf("Add fd %d ok", fd)
+			listeners = append(listeners, ln)
+			log.Printf("add fd %d ok", fd)
 			continue
 		}
 		log.Println(fmt.Sprintf("create FileListener error=\"%s\", fd=%d", err, fd))
@@ -299,7 +300,7 @@ func getListeners() []*net.Listener {
 // monitor the PIPE IPC between the current process and acl_master,
 // when acl_master close thePIPE, the current process should exit after
 // which has handled all its tasks
-func monitorMaster(listeners []*net.Listener,
+func monitorMaster(listeners []net.Listener,
 	onStopHandler func(), stopHandler func(bool)) {
 
 	file := os.NewFile(uintptr(stateFd), "")
@@ -324,7 +325,7 @@ func monitorMaster(listeners []*net.Listener,
 		// XXX: force stopping listen again
 		for _, ln := range listeners {
 			log.Println("Closing one listener")
-			(*ln).Close()
+			ln.Close()
 		}
 	}
 

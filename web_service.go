@@ -36,7 +36,7 @@ func WebStart(addrs string) {
 		initHandler()
 	}
 
-	var listeners []*net.Listener
+	var listeners []net.Listener
 	if len(addrs) > 0 {
 		listeners = getListenersByAddrs(addrs)
 		daemonMode = false
@@ -50,7 +50,7 @@ func WebStart(addrs string) {
 	}
 
 	for _, ln := range listeners {
-		go webServ(*ln, daemonMode)
+		go webServ(ln, daemonMode)
 	}
 
 	if daemonMode {
