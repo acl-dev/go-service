@@ -6,7 +6,7 @@ import (
 	"log"
 	"net"
 
-	"github.com/acl-dev/go-master"
+	"github.com/acl-dev/master-go"
 )
 
 func onAccept(conn net.Conn) {

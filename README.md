@@ -1,14 +1,14 @@
-[![Circle CI](https://circleci.com/gh/acl-dev/go-master.svg?style=svg)](https://circleci.com/gh/acl-dev/go-master)
+[![Circle CI](https://circleci.com/gh/acl-dev/master-go.svg?style=svg)](https://circleci.com/gh/acl-dev/master-go)
 
 
-# go-master
+# master-go
 
 go 语言开发的服务器模板，可与 acl_master 服务器框架深度集成。
 
 
 ## 安装
 
-	go get -u github.com/acl-dev/go-master
+	go get -u github.com/acl-dev/master-go
 
 ## 使用
 
@@ -21,7 +21,7 @@ go 语言开发的服务器模板，可与 acl_master 服务器框架深度集�
         "net"
         "os"
 
-        "github.com/acl-dev/go-master"
+        "github.com/acl-dev/master-go"
     )
 
     func onAccept(conn net.Conn) {
@@ -66,4 +66,4 @@ go 语言开发的服务器模板，可与 acl_master 服务器框架深度集�
     }
 
 
-更多请参考[examples](https://github.com/acl-dev/go-master/tree/master/examples/)
+更多请参考[examples](https://github.com/acl-dev/master-go/tree/master/examples/)
