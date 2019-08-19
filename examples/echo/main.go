@@ -33,13 +33,15 @@ var (
 
 func main() {
 	flag.StringVar(&filePath, "c", "dummy.cf", "configure filePath")
-	flag.StringVar(&listenAddrs, "listen", "127.0.0.1:8880", "listen addr in alone running")
+	flag.StringVar(&listenAddrs, "listen", "127.0.0.1:28880, 127.0.0.1:28881",
+		"listen addr in alone running")
 
 	flag.Parse()
 
 	master.Prepare()
 
-	fmt.Printf("filePath=%s, MasterServiceType=%s\r\n", filePath, master.MasterServiceType)
+	fmt.Printf("filePath=%s, MasterServiceType=%s\r\n",
+		filePath, master.MasterServiceType)
 
 	master.OnClose(onClose)
 	master.OnAccept(onAccept)
