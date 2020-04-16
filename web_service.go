@@ -25,11 +25,12 @@ func webServ(ln net.Listener, daemon bool) {
 // start WEB service with the specified listening addrs
 func WebStart(addrs string) {
 	var listeners []net.Listener
-	listeners, err := ServiceInit(addrs)
+	listeners, err := ServiceInit(addrs, webStop)
 	if err != nil {
 		panic("ServiceInit failed")
 	}
-	
+
+	var daemonMode bool
 	if len(addrs) > 0 {
 		daemonMode = false
 	} else {
@@ -37,11 +38,8 @@ func WebStart(addrs string) {
 	}
 	
 	for _, ln := range listeners {
+		// create fiber for each listener to accept connections
 		go webServ(ln, daemonMode)
-	}
-
-	if daemonMode {
-		go monitorMaster(listeners, onWebStop, webStop)
 	}
 
 	log.Println("service started!")

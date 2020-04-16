@@ -70,29 +70,15 @@ func OnClose(handler CloseFunc) {
 
 // start TCP service with the specified listening addrs
 func TcpStart(addrs string) {
-	var daemon bool
 	var listeners []net.Listener
-	listeners, err := ServiceInit(addrs)
+	listeners, err := ServiceInit(addrs, tcpStop)
 	if err != nil {
 		panic("ServiceInit failed")
-	}
-
-	if len(addrs) > 0 {
-		daemon = false
-	} else {
-		daemon = true
 	}
 
 	for _, ln := range listeners {
 		// create fiber for each listener to accept connections
 		go loopAccept(ln)
-	}
-
-	// if in daemon mode, the backend monitor fiber will be created for
-	// monitoring the status with the acl_master framework
-
-	if daemon {
-		go monitorMaster(listeners, nil, tcpStop)
 	}
 
 	log.Println("service started!")

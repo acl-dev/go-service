@@ -78,7 +78,7 @@ func setOpenMax() {
 	var rlim syscall.Rlimit
 	err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rlim)
 	if err != nil {
-		fmt.Println("get rlimit error: " + err.Error())
+		fmt.Println("Get rlimit error: " + err.Error())
 		return
 	}
 	if rlim.Max <= 0 {
@@ -88,7 +88,7 @@ func setOpenMax() {
 
 	err = syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rlim)
 	if err != nil {
-		fmt.Println("set rlimit error: " + err.Error())
+		fmt.Println("Set rlimit error: " + err.Error())
 	}
 }
 
@@ -146,7 +146,7 @@ func parseArgs() {
 		}
 	}
 
-	log.Printf("listenFdCount=%d, sockType=%s, services=%s",
+	log.Printf("ListenFdCount=%d, sockType=%s, services=%s",
 		listenFdCount, sockType, services)
 }
 
@@ -205,7 +205,7 @@ func chroot() {
 	} else {
 		gid, err := strconv.Atoi(user.Gid)
 		if err != nil {
-			log.Printf("invalid gid=%s, %s", user.Gid, err)
+			log.Printf("Invalid gid=%s, %s", user.Gid, err)
 		} else if err := syscall.Setgid(gid); err != nil {
 			log.Printf("Setgid error %s", err)
 		} else {
@@ -214,7 +214,7 @@ func chroot() {
 
 		uid, err := strconv.Atoi(user.Uid)
 		if err != nil {
-			log.Printf("invalid uid=%s, %s", user.Uid, err)
+			log.Printf("Invalid uid=%s, %s", user.Uid, err)
 		} else if err := syscall.Setuid(uid); err != nil {
 			log.Printf("Setuid error %s", err)
 		} else {
@@ -242,7 +242,7 @@ func chroot() {
 // this function to listen the given addrs
 func GetListenersByAddrs(addrs string) []net.Listener {
 	if len(addrs) == 0 {
-		panic("no valid addrs for listening")
+		panic("No valid addrs for listening")
 	}
 
 	// split addrs like "xxx.xxx.xxx.xxx:port; xxx.xxx.xxx.xxx:port"
@@ -256,11 +256,11 @@ func GetListenersByAddrs(addrs string) []net.Listener {
 		ln, err := net.Listen("tcp", addr)
 		if err == nil {
 			listeners = append(listeners, ln)
-			log.Printf("listen %s ok", addr)
+			log.Printf("Listen %s ok", addr)
 			continue
 		}
 
-		panic(fmt.Sprintf("listen error=\"%s\", addr=%s", err, addr))
+		panic(fmt.Sprintf("Listen error=\"%s\", addr=%s", err, addr))
 	}
 	return listeners
 }
@@ -286,18 +286,18 @@ func GetListeners() []net.Listener {
 			log.Printf("add fd %d ok", fd)
 			continue
 		}
-		log.Println(fmt.Sprintf("create FileListener error=\"%s\", fd=%d", err, fd))
+		log.Println(fmt.Sprintf("Create FileListener error=\"%s\", fd=%d", err, fd))
 	}
 
 	if len(listeners) == 0 {
-		panic("no listener created!")
+		panic("No listener created!")
 	} else {
-		log.Printf("listeners's len=%d", len(listeners))
+		log.Printf("Listeners's len=%d", len(listeners))
 	}
 	return listeners
 }
 
-func ServiceInit(addrs string) ([]net.Listener, error) {
+func ServiceInit(addrs string, stopHandler func(bool)) ([]net.Listener, error) {
 	Prepare()
 
 	if preJailHandler != nil {
@@ -313,15 +313,24 @@ func ServiceInit(addrs string) ([]net.Listener, error) {
 	// if addrs not empty, alone mode will be used, or daemon mode be used
 
 	var listeners []net.Listener
+	var daemonMode bool
 	
 	if len(addrs) > 0 {
 		listeners = GetListenersByAddrs(addrs)
+		daemonMode = false
 	} else {
 		listeners = GetListeners()
+		daemonMode = true
 	}
 
 	if len(listeners) == 0 {
-		panic("no available listener!")
+		panic("No available listener!")
+	}
+
+	// if in daemon mode, the backend monitor fiber will be created for
+	// monitoring the status with the acl_master framework
+	if daemonMode {
+		go monitorMaster(listeners, nil, stopHandler)
 	}
 	return listeners, nil
 }
@@ -338,12 +347,12 @@ func monitorMaster(listeners []net.Listener,
 		panic(fmt.Sprintf("FileConn error=%s", err))
 	}
 
-	log.Println("waiting master exiting ...")
+	log.Println("Waiting for master exiting ...")
 
 	buf := make([]byte, 1024)
 	_, err = conn.Read(buf)
 	if err != nil {
-		log.Println("disconnected from master", err)
+		log.Println("Disconnected from master", err)
 	}
 
 	stopping = true
@@ -353,7 +362,7 @@ func monitorMaster(listeners []net.Listener,
 	} else {
 		// XXX: force stopping listen again
 		for _, ln := range listeners {
-			log.Println("Closing one listener")
+			log.Println("Closing one listener ", ln.Addr())
 			ln.Close()
 		}
 	}
@@ -373,14 +382,14 @@ func monitorMaster(listeners []net.Listener,
 		connMutex.RUnlock()
 		time.Sleep(time.Second) // sleep 1 second
 		i++
-		log.Printf("exiting, clients=%d, sleep=%d seconds", n, i)
+		log.Printf("Exiting, clients=%d, sleep=%d seconds\r\n", n, i)
 		if AppWaitLimit > 0 && i >= AppWaitLimit {
-			log.Printf("waiting too long >= %d", AppWaitLimit)
+			log.Println("Waiting too long >= %d", AppWaitLimit)
 			break
 		}
 	}
 
-	log.Println("master disconnected, exiting now")
+	log.Println("Master disconnected, exiting now")
 
 	if stopHandler != nil {
 		stopHandler(true)
