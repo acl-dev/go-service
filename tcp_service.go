@@ -70,33 +70,17 @@ func OnClose(handler CloseFunc) {
 
 // start TCP service with the specified listening addrs
 func TcpStart(addrs string) {
-	Prepare()
-
-	if preJailHandler != nil {
-		preJailHandler()
-	}
-
-	chroot()
-
-	if initHandler != nil {
-		initHandler()
-	}
-
-	// if addrs not empty, alone mode will be used, or daemon mode be used
-
 	var daemon bool
 	var listeners []net.Listener
-
-	if len(addrs) > 0 {
-		listeners = getListenersByAddrs(addrs)
-		daemon = false
-	} else {
-		listeners = getListeners()
-		daemon = true
+	listeners, err := ServiceInit(addrs)
+	if err != nil {
+		panic("ServiceInit failed")
 	}
 
-	if len(listeners) == 0 {
-		panic("no available listener!")
+	if len(addrs) > 0 {
+		daemon = false
+	} else {
+		daemon = true
 	}
 
 	for _, ln := range listeners {

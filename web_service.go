@@ -24,31 +24,18 @@ func webServ(ln net.Listener, daemon bool) {
 
 // start WEB service with the specified listening addrs
 func WebStart(addrs string) {
-	Prepare()
-
-	if preJailHandler != nil {
-		preJailHandler()
-	}
-
-	chroot()
-
-	if initHandler != nil {
-		initHandler()
-	}
-
 	var listeners []net.Listener
+	listeners, err := ServiceInit(addrs)
+	if err != nil {
+		panic("ServiceInit failed")
+	}
+	
 	if len(addrs) > 0 {
-		listeners = getListenersByAddrs(addrs)
 		daemonMode = false
 	} else {
-		listeners = getListeners()
 		daemonMode = true
 	}
-
-	if len(listeners) == 0 {
-		panic("no available listener!")
-	}
-
+	
 	for _, ln := range listeners {
 		go webServ(ln, daemonMode)
 	}

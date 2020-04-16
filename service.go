@@ -240,7 +240,7 @@ func chroot() {
 
 // In run alone mode, the application should give the listening addrs and call
 // this function to listen the given addrs
-func getListenersByAddrs(addrs string) []net.Listener {
+func GetListenersByAddrs(addrs string) []net.Listener {
 	if len(addrs) == 0 {
 		panic("no valid addrs for listening")
 	}
@@ -267,7 +267,7 @@ func getListenersByAddrs(addrs string) []net.Listener {
 
 // In acl_master daemon running mode, this function will be called for init
 // the listener handles.
-func getListeners() []net.Listener {
+func GetListeners() []net.Listener {
 	listeners := []net.Listener(nil)
 	for fd := listenFdStart; fd < listenFdStart+listenFdCount; fd++ {
 		file := os.NewFile(uintptr(fd), "open one listenfd")
@@ -295,6 +295,35 @@ func getListeners() []net.Listener {
 		log.Printf("listeners's len=%d", len(listeners))
 	}
 	return listeners
+}
+
+func ServiceInit(addrs string) ([]net.Listener, error) {
+	Prepare()
+
+	if preJailHandler != nil {
+		preJailHandler()
+	}
+
+	chroot()
+
+	if initHandler != nil {
+		initHandler()
+	}
+
+	// if addrs not empty, alone mode will be used, or daemon mode be used
+
+	var listeners []net.Listener
+	
+	if len(addrs) > 0 {
+		listeners = GetListenersByAddrs(addrs)
+	} else {
+		listeners = GetListeners()
+	}
+
+	if len(listeners) == 0 {
+		panic("no available listener!")
+	}
+	return listeners, nil
 }
 
 // monitor the PIPE IPC between the current process and acl_master,
