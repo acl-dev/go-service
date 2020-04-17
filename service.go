@@ -223,6 +223,15 @@ func chroot() {
 	}
 
 	if chrootOn && len(AppRootDir) > 0 {
+		// The system call chroot can't work correctly on Linux.
+		// In golang issue 1435 from the Go source comments.
+		// On linux Setuid and Setgid only affects the current thread,
+		// not the process. This does not match what most callers expect
+		// so we must return an error here rather than letting the caller
+		// think that the call succeeded.
+		// But I wrote a sample that using setuid and setgid after
+		// creating some threads, thease threads' uid and gid were
+		// changed to the // uid or gid by calling setuid and setgid, why?
 		err := syscall.Chroot(AppRootDir)
 		if err != nil {
 			log.Printf("Chroot error %s, path %s", err, AppRootDir)
@@ -327,8 +336,9 @@ func ServiceInit(addrs string, stopHandler func(bool)) ([]net.Listener, error) {
 		panic("No available listener!")
 	}
 
-	// if in daemon mode, the backend monitor fiber will be created for
-	// monitoring the status with the acl_master framework
+	// In daemon mode, the backend monitor fiber will be created for
+	// monitoring the status with the acl_master framework. If disconnected
+	// from acl_master, the current child process will exit.
 	if daemonMode {
 		go monitorMaster(listeners, nil, stopHandler)
 	}
