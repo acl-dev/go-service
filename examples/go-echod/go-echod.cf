@@ -7,10 +7,9 @@ service echo {
 #	for master_type = unix
 #	master_service = echo.sock
 #	for master_type = sock
-	master_service = 127.0.0.1:5001, 5002, :5003, echo.sock, echo2.sock
+	master_service = 127.0.0.1|5001, 127.0.0.1|5002, echod.sock
 
 #	服务监听为域套接口
-#	master_service = aio_echo.sock
 #	服务类型
 #	master_type = inet
 #	master_type = unix
@@ -38,9 +37,9 @@ service echo {
 #	预启动进程数，该值不得大于 master_maxproc
 	master_prefork = 1
 #	进程程序名
-	master_command = echo
+	master_command = {install_path}/sbin/go-echod
 #	进程日志记录文件
-	master_log = echo.log
+	master_log = {install_path}/var/log/go-echod.log
 #	进程运行时的用户身份
 #	master_owner = root
 #	调试日志方式，格式：tag:level; tag:level; tab:level, 如：all:1; 101:2
