@@ -1,2 +1,2 @@
 #!/bin/sh
-./go-httpd -alone -f go-httpd.cf
+./go-echod -alone -f go-echod.cf
