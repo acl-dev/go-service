@@ -36,7 +36,7 @@ func WebStart(addrs string) {
 	} else {
 		daemonMode = true
 	}
-	
+
 	for _, ln := range listeners {
 		// create fiber for each listener to accept connections
 		go webServ(ln, daemonMode)

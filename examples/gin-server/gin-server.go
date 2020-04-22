@@ -4,14 +4,10 @@ import (
 	"flag"
 	"log"
 	"net"
+	"sync"
 
 	"github.com/gin-gonic/gin"
-	"golang.org/x/sync/errgroup"
 	"github.com/acl-dev/master-go"
-)
-
-var (
-	g errgroup.Group	// Used to waiting for the service to be stopped.
 )
 
 var (
@@ -19,9 +15,15 @@ var (
 	listenAddrs string	// the server's listening addrs in alone mode.
 )
 
+var (
+	g sync.WaitGroup	// Used to wait for service to stop.
+)
+
 // Start one fiber server for one listener which is a webserver.
 func startServer(listener net.Listener)  {
-	g.Go(func() error {
+	go func() {
+		defer g.Done()
+
 		e := gin.New()
 		e.GET("/test", func(c *gin.Context) {
 			c.String(200, "hello world!\r\n")
@@ -29,8 +31,7 @@ func startServer(listener net.Listener)  {
 
 		log.Printf("Listen on %s", listener.Addr())
 		e.RunListener(listener)
-		return nil
-	})
+	}()
 }
 
 func parseArgs()  {
@@ -63,6 +64,9 @@ func main()  {
 		return
 	}
 
+	// Add the listener fibers' count in sync waiting group.
+	g.Add(len(listener))
+
 	// Start fibers for each listener which is listening on different addrs.
 	for _, ln := range listener {
 		startServer(ln)
@@ -70,10 +74,8 @@ func main()  {
 
 	log.Println("gin-server: Wait for services stop ...")
 
-	// Wait for the server to be stopped.
-	if err := g.Wait(); err != nil {
-		log.Fatal(err)
-	}
+	// Wait for all listeners to stop.
+	g.Wait()
 
 	log.Println("gin-server: All services stopped!\r\n")
 }
