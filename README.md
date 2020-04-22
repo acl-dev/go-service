@@ -111,6 +111,9 @@ $ ./echod -alone
 #(cd go-echod; go build; ./setup.sh /opt/soft/go-echod)
 #(cd go-httpd; go build; ./setup.sh /opt/soft/go-httpd)
 #(cd gin-server; go get; go build; ./setup.sh /opt/soft/gin-server)
+#/opt/soft/go-echod/bin/start.sh
+#/opt/soft/go-httpd/bin/start.sh
+#/opt/soft/gin-server/bin/start.sh
 ```
 通过启动脚本分别启动这几个服务例子，启动脚本实际上是通知 `acl_master` 服务程序来启动这几个服务程序。
 
