@@ -122,13 +122,24 @@ $ ./echod -alone
 #/opt/soft/acl-master/bin/master-ctl -a list
 ```
 结果显示如下：
+
 ```
-status	service		type	proc_count	owner	conf	
-200	|8881, 127.0.0.1|8882, go-httpd.sock		4	2			/opt/soft/go-httpd/conf/go-httpd.cf	
-200	127.0.0.1|5001, 127.0.0.1|5002, echod.sock		4	1			/opt/soft/go-echod/conf/go-echod.cf	
-200	|8887, |8888, |8889, gin-server.sock		4	2		root	/opt/soft/gin-server/conf/gin-server.cf	
+status  service                                         type    proc    owner   conf    
+200     127.0.0.1|5001, 127.0.0.1|5002, echod.sock      4       1       root    /opt/soft/go-echod/conf/go-echod.cf
+200     |8881, 127.0.0.1|8882, go-httpd.sock            4       2       nobody  /opt/soft/go-httpd/conf/go-httpd.cf
+200     |87, |88, |89, gin-server.sock                  4       2       nobody  /opt/soft/gin-server/conf/gin-server.cf
 ```
-说明 `acl_master` 服务管理程序已经管理了这几个 Go 写的服务进程。
+说明 `acl_master` 服务管理程序已经管理了这几个 Go 写的服务进程。同时可以看到：
+- gin-server 服务由 acl_master 启动了两个进程；
+- gin-server 可以同时多个 TCP 端口地址（其实监听行为是由 acl_master 执行的，gin-server 只是继成了这些监听行为）；
+- gin-server 不仅可以监听 TCP 端口，同时还可以监听 UNIX 域地址（这也是由 acl_master 负责监听后传递给 gin-server 的）；
+- gin-server 虽然监听的三个 TCP 端口号 < 1024，但 gin-server 的运行身份已经被 acl_master 切换为普通身份（nobody）。
+
+此外，还需要两点需要注明：
+- 在 UNIX 系统平台上，服务程序监听的端口如果小于 1024，则操作系统则要求此时的运行身份需为 root；
+- 在 Linux 平台下 Go 语言编写的服务程序是无法正常切换运行身份的（具体可参考 Go 源码）。  
+
+在 acl_master 的运行机制下，可以完美解决以上二者的矛盾。
 
 ## 三、参考
 更多请参考[examples](https://github.com/acl-dev/master-go/tree/master/examples/)
