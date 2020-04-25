@@ -88,7 +88,7 @@ $ ./echod -alone
 
 ### 2.2、将 Go 服务程序部署在 acl_master 框架下
 #### 2.2.1 部署 acl_master 服务管理框架
-首先需要从 `https://github.com/acl-dev/acl` 下载 acl 工程，然后编译安装，过程如下：
+首先需要从 `https://github.com/acl-dev/acl` 或 `https://gitee.com/acl-dev/acl` 下载 acl 工程，然后编译安装，过程如下：
 ```
 #cd acl; make
 #cd disk/master; ./setup.sh /opt/soft/acl-master
@@ -107,7 +107,7 @@ $ ./echod -alone
 
 ```
 #go get -u github.com/acl-dev/master-go
-#cd master-go/examples/
+#cd $GOPATH/src/github.com/acl-dev/master-go/examples/
 #(cd go-echod; go build; ./setup.sh /opt/soft/go-echod)
 #(cd go-httpd; go build; ./setup.sh /opt/soft/go-httpd)
 #(cd gin-server; go get; go build; ./setup.sh /opt/soft/gin-server)
@@ -129,6 +129,12 @@ status  service                                         type    proc    owner   
 200     |8881, 127.0.0.1|8882, go-httpd.sock            4       2       nobody  /opt/soft/go-httpd/conf/go-httpd.cf
 200     |87, |88, |89, gin-server.sock                  4       2       nobody  /opt/soft/gin-server/conf/gin-server.cf
 ```
+可以使用 `curl` 工具测试一下 gin-server 服务，如下：
+```
+# curl http://127.0.0.1:88/test
+hello world!
+```
+
 说明 **`acl_master`** 服务管理程序已经管理了这几个 Go 写的服务进程。同时可以看到：
 - `gin-server` 服务由 `acl_master` 启动了两个进程；
 - `gin-server` 可以同时多个 TCP 端口地址（其实是由 `acl_master` 是监听的，`gin-server` 只是继承了这种监听行为）；
