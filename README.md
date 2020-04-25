@@ -115,7 +115,9 @@ $ ./echod -alone
 #/opt/soft/go-httpd/bin/start.sh
 #/opt/soft/gin-server/bin/start.sh
 ```
-通过启动脚本分别启动这几个服务例子，启动脚本实际上是通知 **`acl_master`** 服务程序来启动这几个服务程序。
+通过启动脚本分别启动这几个服务例子，启动脚本实际上是通知 **`acl_master`** 服务程序来启动这几个服务程序。  
+
+其中的示例 <a href=https://github.com/acl-dev/master-go/tree/master/examples/gin-server target=_blank> gin-server </a> 是使用 <a href=https://github.com/gin-gonic/gin target=_blank> gin </a> 编写的一个简单的 Go web 服务。  
 
 最后运行 **`acl_master`** 服务框架中的管理工具来查看由 **`acl_master`** 管理的服务：
 ```
