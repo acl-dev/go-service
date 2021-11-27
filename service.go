@@ -394,7 +394,7 @@ func monitorMaster(listeners []net.Listener,
 		i++
 		log.Printf("Exiting, clients=%d, sleep=%d seconds\r\n", n, i)
 		if AppWaitLimit > 0 && i >= AppWaitLimit {
-			log.Println("Waiting too long >= %d", AppWaitLimit)
+			log.Printf("Waiting too long >= %d", AppWaitLimit)
 			break
 		}
 	}
