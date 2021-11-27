@@ -28,6 +28,9 @@ func startServer(listener net.Listener)  {
 		e.GET("/test", func(c *gin.Context) {
 			c.String(200, "hello world!\r\n")
 		})
+		e.GET("/", func(c *gin.Context) {
+			c.String(200, "hello world!\r\n")
+		})
 
 		log.Printf("Listen on %s", listener.Addr())
 		e.RunListener(listener)
