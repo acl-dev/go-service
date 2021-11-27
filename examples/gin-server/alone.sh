@@ -1,2 +1,3 @@
 #!/bin/sh
-./gin-server -alone -f gin-server.cf
+basedir=$(dirname "$0")
+$basedir/gin-server -alone -f $basedir/gin-server.cf

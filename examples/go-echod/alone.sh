@@ -1,2 +1,3 @@
 #!/bin/sh
-./go-echod -alone -f go-echod.cf
+basedir=$(dirname "$0")
+$basedir/go-echod -alone -f $basedir/go-echod.cf

@@ -1,2 +1,3 @@
 #!/bin/sh
-./go-httpd -alone -f go-httpd.cf
+basedir=$(dirname "$0")
+$basedir/go-httpd -alone -f $basedir/go-httpd.cf
