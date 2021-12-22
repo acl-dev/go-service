@@ -1,4 +1,4 @@
-// +build linux darwin
+// +build windows
 
 package master
 
@@ -13,7 +13,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 )
 
@@ -77,6 +76,7 @@ var (
 // set the max opened file handles for current process which let
 // the process can handle more connections.
 func setOpenMax() {
+	/*
 	var rlim syscall.Rlimit
 	err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rlim)
 	if err != nil {
@@ -92,6 +92,8 @@ func setOpenMax() {
 	if err != nil {
 		fmt.Println("Set rlimit error: " + err.Error())
 	}
+	
+	 */
 }
 
 // init the command args come from acl_master; the application should call
@@ -201,10 +203,11 @@ func chroot() {
 		return
 	}
 
-	user, err := user.Lookup(MasterOwner)
+	_, err := user.Lookup(MasterOwner)
 	if err != nil {
 		log.Printf("Lookup %s error %s", MasterOwner, err)
 	} else {
+		/*
 		gid, err := strconv.Atoi(user.Gid)
 		if err != nil {
 			log.Printf("Invalid gid=%s, %s", user.Gid, err)
@@ -222,6 +225,7 @@ func chroot() {
 		} else {
 			log.Printf("Setuid ok")
 		}
+		*/
 	}
 
 	if chrootOn && len(AppRootDir) > 0 {
@@ -234,6 +238,7 @@ func chroot() {
 		// But I wrote a sample that using setuid and setgid after
 		// creating some threads, thease threads' uid and gid were
 		// changed to the // uid or gid by calling setuid and setgid, why?
+		/*
 		err := syscall.Chroot(AppRootDir)
 		if err != nil {
 			log.Printf("Chroot error %s, path %s", err, AppRootDir)
@@ -246,6 +251,7 @@ func chroot() {
 				log.Printf("Chdir ok")
 			}
 		}
+		*/
 	}
 }
 
