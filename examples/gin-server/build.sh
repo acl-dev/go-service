@@ -1,4 +1,4 @@
 #!/bin/sh
 
-go get
-go build
+go mod tidy
+go build -o gin-server
