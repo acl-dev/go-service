@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/acl-dev/master-go"
@@ -29,11 +30,15 @@ func main() {
 
 	http.HandleFunc("/", handler)
 
+	var err error
 	if master.Alone {
-		fmt.Println("listen: ", listenAddrs)
-		master.WebStart(listenAddrs)
+		fmt.Println("listen:", listenAddrs)
+		err = master.WebAloneStart(listenAddrs)
 	} else {
 		// daemon mode in master framework
-		master.WebStart("")
+		err = master.WebDaemonStart()
+	}
+	if err != nil {
+		log.Println("Start webserver failed:", err)
 	}
 }

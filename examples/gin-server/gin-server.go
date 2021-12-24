@@ -63,7 +63,7 @@ func main()  {
 		listener, err = master.ServiceInit("", onStop)
 	}
 	if err != nil {
-		log.Printf("Listen error: %s\r\n", err)
+		log.Println("Listen error:", err)
 		return
 	}
 

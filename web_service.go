@@ -2,6 +2,7 @@ package master
 
 import (
 	"context"
+	"errors"
 	"log"
 	"net"
 	"net/http"
@@ -22,12 +23,25 @@ func webServ(ln net.Listener, daemon bool) {
 	serv.Serve(ln)
 }
 
+func WebAloneStart(addrs string) error {
+	if len(addrs) == 0 {
+		log.Println("addrs empty")
+		return errors.New("addrs empty")
+	}
+	return webStart(addrs)
+}
+
+func WebDaemonStart() error{
+	return webStart("")
+}
+
 // start WEB service with the specified listening addrs
-func WebStart(addrs string) {
+func webStart(addrs string) error {
 	var listeners []net.Listener
 	listeners, err := ServiceInit(addrs, webStop)
 	if err != nil {
-		panic("ServiceInit failed")
+		log.Println("ServiceInit failed:", err)
+		return err
 	}
 
 	var daemonMode bool
@@ -57,6 +71,7 @@ func WebStart(addrs string) {
 	} else {
 		log.Println("service stopped abnormal!")
 	}
+	return nil
 }
 
 func onWebStop() {
