@@ -46,11 +46,15 @@ func main() {
 	master.OnClose(onClose)
 	master.OnAccept(onAccept)
 
+	var err error
 	if master.Alone {
 		fmt.Printf("listen: %s\r\n", listenAddrs)
-		master.TcpStart(listenAddrs)
+		err = master.TcpStart(listenAddrs)
 	} else {
 		// daemon mode in master framework
-		master.TcpStart("")
+		err = master.TcpStart("")
+	}
+	if err != nil {
+		log.Println("start tcp server error:", err)
 	}
 }

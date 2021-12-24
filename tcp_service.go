@@ -69,11 +69,12 @@ func OnClose(handler CloseFunc) {
 }
 
 // start TCP service with the specified listening addrs
-func TcpStart(addrs string) {
+func TcpStart(addrs string) error {
 	var listeners []net.Listener
 	listeners, err := ServiceInit(addrs, tcpStop)
 	if err != nil {
-		panic("ServiceInit failed")
+		log.Println("ServiceInit failed:", err)
+		return err
 	}
 
 	for _, ln := range listeners {
@@ -98,6 +99,7 @@ func TcpStart(addrs string) {
 	} else {
 		log.Println("service stopped abnormal!")
 	}
+	return nil
 }
 
 // callback when service stopped, be called in service.go

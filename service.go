@@ -3,6 +3,7 @@
 package master
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -251,9 +252,10 @@ func chroot() {
 
 // In run alone mode, the application should give the listening addrs and call
 // this function to listen the given addrs
-func GetListenersByAddrs(addrs string) []net.Listener {
+func GetListenersByAddrs(addrs string) ([]net.Listener, error) {
 	if len(addrs) == 0 {
-		panic("No valid addrs for listening")
+		log.Println("No valid addrs for listening")
+		return nil, errors.New("No valid addrs for listening")
 	}
 
 	// split addrs like "xxx.xxx.xxx.xxx:port; xxx.xxx.xxx.xxx:port"
@@ -267,18 +269,21 @@ func GetListenersByAddrs(addrs string) []net.Listener {
 		ln, err := net.Listen("tcp", addr)
 		if err == nil {
 			listeners = append(listeners, ln)
-			log.Printf("Listen %s ok", addr)
+			log.Printf("Listen %s ok\r\n", addr)
 			continue
 		}
 
-		panic(fmt.Sprintf("Listen error=\"%s\", addr=%s", err, addr))
+		log.Println("Listen", addr, "error:", err)
 	}
-	return listeners
+	if len(listeners) == 0 {
+		return nil, errors.New("No listeners were created!")
+	}
+	return listeners, nil
 }
 
 // In acl_master daemon running mode, this function will be called for init
 // the listener handles.
-func GetListeners() []net.Listener {
+func GetListeners() ([]net.Listener, error) {
 	listeners := []net.Listener(nil)
 	for fd := listenFdStart; fd < listenFdStart+listenFdCount; fd++ {
 		file := os.NewFile(uintptr(fd), "open one listenfd")
@@ -301,11 +306,12 @@ func GetListeners() []net.Listener {
 	}
 
 	if len(listeners) == 0 {
-		panic("No listener created!")
+		log.Println("No listener created!")
+		return nil, errors.New("No listener created")
 	} else {
-		log.Printf("Listeners's len=%d", len(listeners))
+		log.Printf("Listeners's len=%d\r\n", len(listeners))
 	}
-	return listeners
+	return listeners, nil
 }
 
 func ServiceInit(addrs string, stopHandler func(bool)) ([]net.Listener, error) {
@@ -327,15 +333,25 @@ func ServiceInit(addrs string, stopHandler func(bool)) ([]net.Listener, error) {
 	var daemonMode bool
 	
 	if len(addrs) > 0 {
-		listeners = GetListenersByAddrs(addrs)
+		var err error
+		listeners, err = GetListenersByAddrs(addrs)
+		if err != nil {
+			return nil, err
+		}
 		daemonMode = false
 	} else {
-		listeners = GetListeners()
+		var err error
+		listeners, err = GetListeners()
+		if err != nil {
+			log.Println("GetListeners failed", err)
+			return nil, err
+		}
 		daemonMode = true
 	}
 
 	if len(listeners) == 0 {
-		panic("No available listener!")
+		log.Println("No listener available!")
+		return nil, errors.New("No listener available")
 	}
 
 	// In daemon mode, the backend monitor fiber will be created for
