@@ -33,10 +33,10 @@ func main() {
 	var err error
 	if master.Alone {
 		fmt.Println("listen:", listenAddrs)
-		err = master.WebAloneStart(listenAddrs)
+		err = master.WebAloneStart(listenAddrs, nil)
 	} else {
 		// daemon mode in master framework
-		err = master.WebDaemonStart()
+		err = master.WebDaemonStart(nil)
 	}
 	if err != nil {
 		log.Println("Start webserver failed:", err)

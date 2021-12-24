@@ -14,8 +14,8 @@ var (
 	webServers []http.Server
 )
 
-func webServ(ln net.Listener, daemon bool) {
-	serv := http.Server{}
+func webServ(ln net.Listener, daemon bool, h http.Handler) {
+	serv := http.Server{ Handler: h }
 	if daemon {
 		webServers = append(webServers, serv)
 	}
@@ -23,20 +23,20 @@ func webServ(ln net.Listener, daemon bool) {
 	serv.Serve(ln)
 }
 
-func WebAloneStart(addrs string) error {
+func WebAloneStart(addrs string, handler http.Handler) error {
 	if len(addrs) == 0 {
 		log.Println("addrs empty")
 		return errors.New("addrs empty")
 	}
-	return webStart(addrs)
+	return WebStart(addrs, handler)
 }
 
-func WebDaemonStart() error{
-	return webStart("")
+func WebDaemonStart(handler http.Handler) error{
+	return WebStart("", handler)
 }
 
 // start WEB service with the specified listening addrs
-func webStart(addrs string) error {
+func WebStart(addrs string, handler http.Handler) error {
 	var listeners []net.Listener
 	listeners, err := ServiceInit(addrs, webStop)
 	if err != nil {
@@ -53,7 +53,7 @@ func webStart(addrs string) error {
 
 	for _, ln := range listeners {
 		// create fiber for each listener to accept connections
-		go webServ(ln, daemonMode)
+		go webServ(ln, daemonMode, handler)
 	}
 
 	log.Println("service started!")

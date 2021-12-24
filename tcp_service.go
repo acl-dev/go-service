@@ -1,6 +1,7 @@
 package master
 
 import (
+	"errors"
 	//"flag"
 	"log"
 	"net"
@@ -66,6 +67,18 @@ func OnAccept(handler AcceptFunc) {
 
 func OnClose(handler CloseFunc) {
 	closeHandler = handler
+}
+
+func TcpAloneStart(addrs string) error {
+	if len(addrs) == 0 {
+		log.Println("Addrs empty")
+		return errors.New("Addrs empty")
+	}
+	return TcpStart(addrs)
+}
+
+func TcpDaemonStart() error {
+	return TcpStart("")
 }
 
 // start TCP service with the specified listening addrs

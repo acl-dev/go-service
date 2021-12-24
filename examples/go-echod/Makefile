@@ -1,4 +1,4 @@
 all:
-	@(go build)
+	@(go build -o go-echod)
 clean:
 	@(rm -f go-echod)

@@ -49,10 +49,10 @@ func main() {
 	var err error
 	if master.Alone {
 		fmt.Printf("listen: %s\r\n", listenAddrs)
-		err = master.TcpStart(listenAddrs)
+		err = master.TcpAloneStart(listenAddrs)
 	} else {
 		// daemon mode in master framework
-		err = master.TcpStart("")
+		err = master.TcpDaemonStart()
 	}
 	if err != nil {
 		log.Println("start tcp server error:", err)
