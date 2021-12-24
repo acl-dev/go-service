@@ -14,8 +14,8 @@ var (
 	webServers []http.Server
 )
 
-func webServ(ln net.Listener, daemon bool, h http.Handler) {
-	serv := http.Server{ Handler: h }
+func webServ(ln net.Listener, daemon bool, handler http.Handler) {
+	serv := http.Server{ Handler: handler }
 	if daemon {
 		webServers = append(webServers, serv)
 	}
