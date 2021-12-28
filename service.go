@@ -50,6 +50,7 @@ var (
 
 // from configure file of the app
 var (
+	AppConf        Config
 	MasterService  string
 	MasterLogPath  string
 	MasterOwner    string
@@ -61,6 +62,9 @@ var (
 	AppWaitLimit   int    = 10
 	AppAccessAllow string = "all"
 	Appthreads     int    = 0
+
+	TlsCertFile    string
+	TlsKeyFile     string
 )
 
 // from command args
@@ -165,10 +169,10 @@ func Prepare() {
 
 	parseArgs()
 
-	conf := new(Config)
-	conf.InitConfig(confPath)
+	Appconf = new(Config)
+	Appconf.InitConfig(confPath)
 
-	MasterLogPath = conf.GetString("master_log")
+	MasterLogPath = Appconf.GetString("master_log")
 	if len(MasterLogPath) > 0 {
 		f, err := os.OpenFile(MasterLogPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 		if err != nil {
@@ -179,20 +183,23 @@ func Prepare() {
 		}
 	}
 
-	MasterService = conf.GetString("master_service")
-	MasterOwner = conf.GetString("master_owner")
-	MasterArgs = conf.GetString("master_args")
+	MasterService = Appconf.GetString("master_service")
+	MasterOwner = Appconf.GetString("master_owner")
+	MasterArgs = Appconf.GetString("master_args")
 
-	AppRootDir = conf.GetString("app_queue_dir")
-	AppUseLimit = conf.GetInt("app_use_limit")
-	AppIdleLimit = conf.GetInt("app_idle_limit")
-	AppQuickAbort = conf.GetBool("app_quick_abort")
-	AppWaitLimit = conf.GetInt("app_wait_limit")
-	AppAccessAllow = conf.GetString("app_access_allow")
-	Appthreads = conf.GetInt("app_threads")
+	AppRootDir = Appconf.GetString("app_queue_dir")
+	AppUseLimit = Appconf.GetInt("app_use_limit")
+	AppIdleLimit = Appconf.GetInt("app_idle_limit")
+	AppQuickAbort = Appconf.GetBool("app_quick_abort")
+	AppWaitLimit = Appconf.GetInt("app_wait_limit")
+	AppAccessAllow = Appconf.GetString("app_access_allow")
+	Appthreads = Appconf.GetInt("app_threads")
 	if Appthreads > 0 {
 		runtime.GOMAXPROCS(Appthreads)
 	}
+
+	TlsCertFile = Appconf.GetString("tls_cert_file")
+	TlsKeyFile = Appconf.GetString("tls_key_file")
 
 	log.Printf("Args: %s, AppAccessAllow: %s\r\n", MasterArgs, AppAccessAllow)
 }
