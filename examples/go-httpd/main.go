@@ -17,13 +17,20 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 var (
-	filePath    string
-	listenAddrs string
+	filePath = flag.String(
+		"c",
+		"dummy.cf",
+		"congiure filePath",
+	)
+
+	listenAddrs = flag.String(
+		"listen",
+		"127.0.0.1:8880",
+		"Listen addrs in alone running",
+	)
 )
 
 func main() {
-	flag.StringVar(&filePath, "c", "dummy.cf", "configure filePath")
-	flag.StringVar(&listenAddrs, "listen", "127.0.0.1:8880", "listen addr in alone running")
 	flag.Parse()
 
 	master.Prepare()
@@ -33,7 +40,7 @@ func main() {
 	var err error
 	if master.Alone {
 		fmt.Println("listen:", listenAddrs)
-		err = master.WebAloneStart(listenAddrs, nil)
+		err = master.WebAloneStart(*listenAddrs, nil)
 	} else {
 		// daemon mode in master framework
 		err = master.WebDaemonStart(nil)
