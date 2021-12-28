@@ -27,9 +27,9 @@ var (
 	confPath      string
 	sockType      string
 	services      string
-	privilege     bool = false
-	verbose       bool = false
-	chrootOn      bool = false
+	privilege   = false
+	verbose     = false
+	chrootOn    = false
 )
 
 type PreJailFunc func()
@@ -77,24 +77,6 @@ var (
 // set the max opened file handles for current process which let
 // the process can handle more connections.
 func setOpenMax() {
-	/*
-	var rlim syscall.Rlimit
-	err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rlim)
-	if err != nil {
-		fmt.Println("Get rlimit error: " + err.Error())
-		return
-	}
-	if rlim.Max <= 0 {
-		rlim.Max = 100000
-	}
-	rlim.Cur = rlim.Max
-
-	err = syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rlim)
-	if err != nil {
-		fmt.Println("Set rlimit error: " + err.Error())
-	}
-	
-	 */
 }
 
 // init the command args come from acl_master; the application should call
@@ -155,8 +137,8 @@ func parseArgs() {
 		listenFdCount, sockType, services)
 }
 
-// this function can be called automatically in net_service.go or
-// web_service.go to load configure, and it can also be canned in appliction's
+// Prepare this function can be called automatically in net_service.go or
+// web_service.go to load configure, and it can also be canned in application's
 // main function
 func Prepare() {
 	if prepareCalled {
@@ -207,57 +189,11 @@ func chroot() {
 	_, err := user.Lookup(MasterOwner)
 	if err != nil {
 		log.Printf("Lookup %s error %s", MasterOwner, err)
-	} else {
-		/*
-		gid, err := strconv.Atoi(user.Gid)
-		if err != nil {
-			log.Printf("Invalid gid=%s, %s", user.Gid, err)
-		} else if err := syscall.Setgid(gid); err != nil {
-			log.Printf("Setgid error %s", err)
-		} else {
-			log.Printf("Setgid ok")
-		}
-
-		uid, err := strconv.Atoi(user.Uid)
-		if err != nil {
-			log.Printf("Invalid uid=%s, %s", user.Uid, err)
-		} else if err := syscall.Setuid(uid); err != nil {
-			log.Printf("Setuid error %s", err)
-		} else {
-			log.Printf("Setuid ok")
-		}
-		*/
-	}
-
-	if chrootOn && len(AppRootDir) > 0 {
-		// The system call chroot can't work correctly on Linux.
-		// In golang issue 1435 from the Go source comments.
-		// On linux Setuid and Setgid only affects the current thread,
-		// not the process. This does not match what most callers expect
-		// so we must return an error here rather than letting the caller
-		// think that the call succeeded.
-		// But I wrote a sample that using setuid and setgid after
-		// creating some threads, thease threads' uid and gid were
-		// changed to the // uid or gid by calling setuid and setgid, why?
-		/*
-		err := syscall.Chroot(AppRootDir)
-		if err != nil {
-			log.Printf("Chroot error %s, path %s", err, AppRootDir)
-		} else {
-			log.Printf("Chroot ok, path %s", AppRootDir)
-			err := syscall.Chdir("/")
-			if err != nil {
-				log.Printf("Chdir error %s", err)
-			} else {
-				log.Printf("Chdir ok")
-			}
-		}
-		*/
 	}
 }
 
-// In run alone mode, the application should give the listening addrs and call
-// this function to listen the given addrs
+// GetListenersByAddrs In run alone mode, the application should give the listening addrs
+// and call this function to listen the given addrs
 func GetListenersByAddrs(addrs string) ([]net.Listener, error) {
 	if len(addrs) == 0 {
 		log.Println("No valid addrs for listening")
@@ -288,8 +224,8 @@ func GetListenersByAddrs(addrs string) ([]net.Listener, error) {
 	return listeners, nil
 }
 
-// In acl_master daemon running mode, this function will be called for init
-// the listener handles.
+// GetListeners in acl_master daemon running mode, this function will be called to
+// init the listener handles.
 func GetListeners() ([]net.Listener, error) {
 	listeners := []net.Listener(nil)
 	for fd := listenFdStart; fd < listenFdStart+listenFdCount; fd++ {
@@ -299,11 +235,12 @@ func GetListeners() ([]net.Listener, error) {
 			continue
 		}
 
-		// fd will be dupped in FileListener, so we should close it
-		// after the listener is created
-		defer file.Close()
-
 		ln, err := net.FileListener(file)
+
+		// fd will be duped in FileListener, so we should close it
+		// after the listener is created
+		_ = file.Close()
+
 		if err == nil {
 			listeners = append(listeners, ln)
 			log.Printf("add fd %d ok\r\n", fd)
@@ -370,7 +307,7 @@ func ServiceInit(addrs string, stopHandler func(bool)) ([]net.Listener, error) {
 	return listeners, nil
 }
 
-// monitor the PIPE IPC between the current process and acl_master,
+// monitorMaster monitor the PIPE IPC between the current process and acl_master,
 // when acl_master close thePIPE, the current process should exit after
 // which has handled all its tasks
 func monitorMaster(listeners []net.Listener,
@@ -398,7 +335,7 @@ func monitorMaster(listeners []net.Listener,
 		// XXX: force stopping listen again
 		for _, ln := range listeners {
 			log.Println("Closing one listener ", ln.Addr())
-			ln.Close()
+			_ = ln.Close()
 		}
 	}
 

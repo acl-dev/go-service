@@ -9,20 +9,14 @@ import (
 	"github.com/acl-dev/master-go"
 )
 
-func handler(w http.ResponseWriter, r *http.Request) {
+func handler(w http.ResponseWriter, _ *http.Request) {
 	//fmt.Println("served", r.URL)
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.Header().Set("Server", "go-httpd")
-	fmt.Fprintf(w, "Hello World!\r\n")
+	_, _ = fmt.Fprintf(w, "Hello World!\r\n")
 }
 
 var (
-	filePath = flag.String(
-		"c",
-		"dummy.cf",
-		"congiure filePath",
-	)
-
 	listenAddrs = flag.String(
 		"listen",
 		"127.0.0.1:8880",

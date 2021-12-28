@@ -3,9 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/acl-dev/master-go"
 	"log"
 	"net/http"
-	"github.com/acl-dev/master-go"
 )
 
 var (
@@ -15,30 +15,30 @@ var (
 
 type MyHandler map[string]float32
 
-func (self MyHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+func (handler MyHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	switch req.URL.Path {
 	case "/list":
-		for item, price := range self {
-			fmt.Fprintf(w, "%s: %.2f\r\n", item, price)
+		for item, price := range handler {
+			_, _ = fmt.Fprintf(w, "%s: %.2f\r\n", item, price)
 		}
 	case "/price":
 		item := req.URL.Query().Get("item")
 		if len(item) == 0 {
 			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprintf(w, "no item in request url: %s", req.URL)
+			_, _ = fmt.Fprintf(w, "no item in request url: %s", req.URL)
 			return
 		}
 
-		price, ok := self[item]
-		if !ok {
-			w.WriteHeader(http.StatusNotFound)
-			fmt.Fprintf(w, "no such item: %s\r\n", item)
+		price, ok := handler[item]
+		if ok {
+			_, _ = fmt.Fprintf(w, "%s: %.2f dollars\r\n", item, price)
 		} else {
-			fmt.Fprintf(w, "%s: %.2f dollars\r\n", item, price)
+			w.WriteHeader(http.StatusNotFound)
+			_, _ = fmt.Fprintf(w, "no such item: %s\r\n", item)
 		}
 	default:
 		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(w, "no such page: %s\r\n", req.URL)
+		_, _ = fmt.Fprintf(w, "no such page: %s\r\n", req.URL)
 	}
 }
 

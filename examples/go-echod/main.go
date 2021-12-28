@@ -18,21 +18,23 @@ func onAccept(conn net.Conn) {
 			break
 		}
 
-		conn.Write(buf[0:n])
+		_, err = conn.Write(buf[0:n])
+		if err != nil {
+			fmt.Println("write error", err)
+			break
+		}
 	}
 }
 
-func onClose(conn net.Conn) {
+func onClose(net.Conn) {
 	log.Println("---client onClose---")
 }
 
 var (
-	filePath    string
 	listenAddrs string
 )
 
 func main() {
-	flag.StringVar(&filePath, "c", "dummy.cf", "configure filePath")
 	flag.StringVar(&listenAddrs, "listen", "127.0.0.1:28880, 127.0.0.1:28881",
 		"listen addr in alone running")
 
@@ -40,8 +42,7 @@ func main() {
 
 	master.Prepare()
 
-	fmt.Printf("filePath=%s, MasterServiceType=%s\r\n",
-		filePath, master.MasterServiceType)
+	fmt.Printf("MasterServiceType=%s\r\n", master.MasterServiceType)
 
 	master.OnClose(onClose)
 	master.OnAccept(onAccept)

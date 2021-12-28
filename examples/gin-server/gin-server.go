@@ -6,12 +6,11 @@ import (
 	"net"
 	"sync"
 
-	"github.com/gin-gonic/gin"
 	"github.com/acl-dev/master-go"
+	"github.com/gin-gonic/gin"
 )
 
 var (
-	filePath    string	// the server's configure file.
 	listenAddrs string	// the server's listening addrs in alone mode.
 )
 
@@ -33,12 +32,11 @@ func startServer(listener net.Listener)  {
 		})
 
 		log.Printf("Listen on %s", listener.Addr())
-		e.RunListener(listener)
+		_ = e.RunListener(listener)
 	}()
 }
 
 func parseArgs()  {
-	flag.StringVar(&filePath, "c", "gin-server.cf", "Configure filePath")
 	flag.StringVar(&listenAddrs, "listen", "127.0.0.1:28880, 127.0.0.1:28881",
 		"Listen addr in alone running")
 
@@ -85,6 +83,6 @@ func main()  {
 
 // The callback used in master.ServiceInit() for the second arg, when the server
 // is to being stopped, the callback will be called.
-func onStop(ok bool) {
+func onStop(bool) {
 	log.Println("gin-server: Disconnect from acl_master!")
 }

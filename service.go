@@ -153,8 +153,8 @@ func parseArgs() {
 		listenFdCount, sockType, services)
 }
 
-// this function can be called automatically in net_service.go or
-// web_service.go to load configure, and it can also be canned in appliction's
+// Prepare this function can be called automatically in net_service.go or
+// web_service.go to load configure, and it can also be canned in application's
 // main function
 func Prepare() {
 	if prepareCalled {

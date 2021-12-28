@@ -2,7 +2,6 @@ package master
 
 import (
 	"errors"
-	//"flag"
 	"log"
 	"net"
 	"os"
@@ -32,7 +31,7 @@ func handleConn(conn net.Conn) {
 		log.Println("closeHandler nil")
 	}
 
-	conn.Close()
+	_ = conn.Close()
 
 	connCountDec()
 }
@@ -43,7 +42,7 @@ func loopAccept(ln net.Listener) {
 		if err != nil {
 			log.Println("Accept error", err)
 			time.Sleep(1000 * time.Millisecond)
-			continue
+			break
 		}
 
 		go handleConn(conn)
@@ -81,7 +80,7 @@ func TcpDaemonStart() error {
 	return TcpStart("")
 }
 
-// start TCP service with the specified listening addrs
+// TcpStart start TCP service with the specified listening addrs
 func TcpStart(addrs string) error {
 	var listeners []net.Listener
 	listeners, err := ServiceInit(addrs, tcpStop)
