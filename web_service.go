@@ -1,26 +1,39 @@
 package master
 
 import (
-	"context"
 	"errors"
 	"log"
 	"net"
 	"net/http"
-	"sync"
+	"os"
 )
 
 var (
-	daemonMode bool = false
-	webServers []http.Server
+	daemonMode = false
+	webServers []*http.Server
 )
 
+func pathExist(path string) bool {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true
+	}
+	return true
+}
+
 func webServ(ln net.Listener, daemon bool, handler http.Handler) {
-	serv := http.Server{ Handler: handler }
+	serv := &http.Server{ Handler: handler }
 	if daemon {
 		webServers = append(webServers, serv)
 	}
 
-	serv.Serve(ln)
+	if len(TlsCertFile) > 0 && len(TlsKeyFile) > 0 &&
+		pathExist(TlsCertFile) && pathExist(TlsKeyFile) {
+
+		_ = serv.ServeTLS(ln, TlsCertFile, TlsKeyFile)
+	} else {
+		_ = serv.Serve(ln)
+	}
 }
 
 func WebAloneStart(addrs string, handler http.Handler) error {
@@ -44,7 +57,6 @@ func WebStart(addrs string, handler http.Handler) error {
 		return err
 	}
 
-	var daemonMode bool
 	if len(addrs) > 0 {
 		daemonMode = false
 	} else {
@@ -74,17 +86,23 @@ func WebStart(addrs string, handler http.Handler) error {
 	return nil
 }
 
+/*
 func onWebStop() {
 	var wg sync.WaitGroup
+
 	wg.Add(len(webServers))
+
 	for _, ln := range webServers {
+		ln := ln
 		go func() {
 			defer wg.Done()
-			ln.Shutdown(context.Background())
+			_ = ln.Shutdown(context.Background())
 		}()
 	}
+
 	wg.Wait()
 }
+*/
 
 func webStop(n bool) {
 	if doneChan != nil {

@@ -50,7 +50,7 @@ var (
 
 // from configure file of the app
 var (
-	AppConf        Config
+	AppConf       *Config
 	MasterService  string
 	MasterLogPath  string
 	MasterOwner    string
@@ -79,7 +79,7 @@ var (
 	Alone             bool
 )
 
-// set the max opened file handles for current process which let
+// setOpenMax set the max opened file handles for current process which let
 // the process can handle more connections.
 func setOpenMax() {
 	var rlim syscall.Rlimit
@@ -99,7 +99,7 @@ func setOpenMax() {
 	}
 }
 
-// init the command args come from acl_master; the application should call
+// initFlags init the command args come from acl_master; the application should call
 // flag.Parse() in its main function!
 func initFlags() {
 	flag.StringVar(&MasterConfigure, "f", "", "app configure file")
@@ -169,10 +169,10 @@ func Prepare() {
 
 	parseArgs()
 
-	Appconf = new(Config)
-	Appconf.InitConfig(confPath)
+	AppConf = new(Config)
+	AppConf.InitConfig(confPath)
 
-	MasterLogPath = Appconf.GetString("master_log")
+	MasterLogPath = AppConf.GetString("master_log")
 	if len(MasterLogPath) > 0 {
 		f, err := os.OpenFile(MasterLogPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 		if err != nil {
@@ -183,23 +183,23 @@ func Prepare() {
 		}
 	}
 
-	MasterService = Appconf.GetString("master_service")
-	MasterOwner = Appconf.GetString("master_owner")
-	MasterArgs = Appconf.GetString("master_args")
+	MasterService = AppConf.GetString("master_service")
+	MasterOwner = AppConf.GetString("master_owner")
+	MasterArgs = AppConf.GetString("master_args")
 
-	AppRootDir = Appconf.GetString("app_queue_dir")
-	AppUseLimit = Appconf.GetInt("app_use_limit")
-	AppIdleLimit = Appconf.GetInt("app_idle_limit")
-	AppQuickAbort = Appconf.GetBool("app_quick_abort")
-	AppWaitLimit = Appconf.GetInt("app_wait_limit")
-	AppAccessAllow = Appconf.GetString("app_access_allow")
-	Appthreads = Appconf.GetInt("app_threads")
+	AppRootDir = AppConf.GetString("app_queue_dir")
+	AppUseLimit = AppConf.GetInt("app_use_limit")
+	AppIdleLimit = AppConf.GetInt("app_idle_limit")
+	AppQuickAbort = AppConf.GetBool("app_quick_abort")
+	AppWaitLimit = AppConf.GetInt("app_wait_limit")
+	AppAccessAllow = AppConf.GetString("app_access_allow")
+	Appthreads = AppConf.GetInt("app_threads")
 	if Appthreads > 0 {
 		runtime.GOMAXPROCS(Appthreads)
 	}
 
-	TlsCertFile = Appconf.GetString("tls_cert_file")
-	TlsKeyFile = Appconf.GetString("tls_key_file")
+	TlsCertFile = AppConf.GetString("tls_cert_file")
+	TlsKeyFile = AppConf.GetString("tls_key_file")
 
 	log.Printf("Args: %s, AppAccessAllow: %s\r\n", MasterArgs, AppAccessAllow)
 }
@@ -209,22 +209,22 @@ func chroot() {
 		return
 	}
 
-	user, err := user.Lookup(MasterOwner)
+	u, err := user.Lookup(MasterOwner)
 	if err != nil {
 		log.Printf("Lookup %s error %s", MasterOwner, err)
 	} else {
-		gid, err := strconv.Atoi(user.Gid)
+		gid, err := strconv.Atoi(u.Gid)
 		if err != nil {
-			log.Printf("Invalid gid=%s, %s", user.Gid, err)
+			log.Printf("Invalid gid=%s, %s", u.Gid, err)
 		} else if err := syscall.Setgid(gid); err != nil {
 			log.Printf("Setgid error %s", err)
 		} else {
 			log.Printf("Setgid ok")
 		}
 
-		uid, err := strconv.Atoi(user.Uid)
+		uid, err := strconv.Atoi(u.Uid)
 		if err != nil {
-			log.Printf("Invalid uid=%s, %s", user.Uid, err)
+			log.Printf("Invalid uid=%s, %s", u.Uid, err)
 		} else if err := syscall.Setuid(uid); err != nil {
 			log.Printf("Setuid error %s", err)
 		} else {
@@ -257,8 +257,8 @@ func chroot() {
 	}
 }
 
-// In run alone mode, the application should give the listening addrs and call
-// this function to listen the given addrs
+// GetListenersByAddrs In run alone mode, the application should give the listening addrs
+// and call this function to listen the given addrs
 func GetListenersByAddrs(addrs string) ([]net.Listener, error) {
 	if len(addrs) == 0 {
 		log.Println("No valid addrs for listening")
@@ -288,8 +288,8 @@ func GetListenersByAddrs(addrs string) ([]net.Listener, error) {
 	return listeners, nil
 }
 
-// In acl_master daemon running mode, this function will be called for init
-// the listener handles.
+// GetListeners In acl_master daemon running mode, this function will be called to
+// init the listener handles.
 func GetListeners() ([]net.Listener, error) {
 	listeners := []net.Listener(nil)
 	for fd := listenFdStart; fd < listenFdStart+listenFdCount; fd++ {
@@ -299,11 +299,12 @@ func GetListeners() ([]net.Listener, error) {
 			continue
 		}
 
+		ln, err := net.FileListener(file)
+
 		// fd will be dupped in FileListener, so we should close it
 		// after the listener is created
-		defer file.Close()
+		_ = file.Close()
 
-		ln, err := net.FileListener(file)
 		if err == nil {
 			listeners = append(listeners, ln)
 			log.Printf("add fd %d ok", fd)
@@ -370,7 +371,7 @@ func ServiceInit(addrs string, stopHandler func(bool)) ([]net.Listener, error) {
 	return listeners, nil
 }
 
-// monitor the PIPE IPC between the current process and acl_master,
+// monitorMaster monitor the PIPE IPC between the current process and acl_master,
 // when acl_master close thePIPE, the current process should exit after
 // which has handled all its tasks
 func monitorMaster(listeners []net.Listener,
@@ -398,7 +399,7 @@ func monitorMaster(listeners []net.Listener,
 		// XXX: force stopping listen again
 		for _, ln := range listeners {
 			log.Println("Closing one listener ", ln.Addr())
-			ln.Close()
+			_ = ln.Close()
 		}
 	}
 
