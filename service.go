@@ -10,7 +10,6 @@ import (
 	"net"
 	"os"
 	"os/user"
-	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -48,25 +47,6 @@ var (
 	prepareCalled  bool = false
 )
 
-// from configure file of the app
-var (
-	AppConf       *Config
-	MasterService  string
-	MasterLogPath  string
-	MasterOwner    string
-	MasterArgs     string
-	AppRootDir     string
-	AppUseLimit    int    = 0
-	AppIdleLimit   int    = 0
-	AppQuickAbort  bool   = false
-	AppWaitLimit   int    = 10
-	AppAccessAllow string = "all"
-	Appthreads     int    = 0
-
-	TlsCertFile    string
-	TlsKeyFile     string
-)
-
 // from command args
 var (
 	MasterConfigure    string
@@ -79,8 +59,6 @@ var (
 
 	Alone             bool
 )
-
-const Version string = "1.0.3"
 
 // setOpenMax set the max opened file handles for current process which let
 // the process can handle more connections.
@@ -171,40 +149,7 @@ func Prepare() {
 	}
 
 	parseArgs()
-
-	AppConf = new(Config)
-	AppConf.InitConfig(confPath)
-
-	MasterLogPath = AppConf.GetString("master_log")
-	if len(MasterLogPath) > 0 {
-		f, err := os.OpenFile(MasterLogPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
-		if err != nil {
-			fmt.Printf("OpenFile %s error %s", MasterLogPath, err)
-		} else {
-			log.SetOutput(f)
-			//log.SetOutput(io.MultiWriter(os.Stderr, f))
-		}
-	}
-
-	MasterService = AppConf.GetString("master_service")
-	MasterOwner = AppConf.GetString("master_owner")
-	MasterArgs = AppConf.GetString("master_args")
-
-	AppRootDir = AppConf.GetString("app_queue_dir")
-	AppUseLimit = AppConf.GetInt("app_use_limit")
-	AppIdleLimit = AppConf.GetInt("app_idle_limit")
-	AppQuickAbort = AppConf.GetBool("app_quick_abort")
-	AppWaitLimit = AppConf.GetInt("app_wait_limit")
-	AppAccessAllow = AppConf.GetString("app_access_allow")
-	Appthreads = AppConf.GetInt("app_threads")
-	if Appthreads > 0 {
-		runtime.GOMAXPROCS(Appthreads)
-	}
-
-	TlsCertFile = AppConf.GetString("tls_cert_file")
-	TlsKeyFile = AppConf.GetString("tls_key_file")
-
-	log.Printf("Args: %s, AppAccessAllow: %s\r\n", MasterArgs, AppAccessAllow)
+	loadConf(confPath)
 }
 
 func chroot() {
