@@ -43,12 +43,13 @@ var (
 	doneChan       chan bool   = make(chan bool)
 	connCount      int         = 0
 	connMutex      sync.RWMutex
-	stopping       bool = false
-	prepareCalled  bool = false
+	stopping       = false
+	prepareCalled  = false
 )
 
 // from configure file of the app
 var (
+	AppConf       *Config
 	MasterService  string
 	MasterLogPath  string
 	MasterOwner    string
@@ -60,6 +61,9 @@ var (
 	AppWaitLimit   int    = 10
 	AppAccessAllow string = "all"
 	Appthreads     int    = 0
+
+	TlsCertFile    string
+	TlsKeyFile     string
 )
 
 // from command args
@@ -149,10 +153,10 @@ func Prepare() {
 
 	parseArgs()
 
-	conf := new(Config)
-	conf.InitConfig(confPath)
+	AppConf = new(Config)
+	AppConf.InitConfig(confPath)
 
-	MasterLogPath = conf.GetString("master_log")
+	MasterLogPath = AppConf.GetString("master_log")
 	if len(MasterLogPath) > 0 {
 		f, err := os.OpenFile(MasterLogPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 		if err != nil {
@@ -163,20 +167,23 @@ func Prepare() {
 		}
 	}
 
-	MasterService = conf.GetString("master_service")
-	MasterOwner = conf.GetString("master_owner")
-	MasterArgs = conf.GetString("master_args")
+	MasterService = AppConf.GetString("master_service")
+	MasterOwner = AppConf.GetString("master_owner")
+	MasterArgs = AppConf.GetString("master_args")
 
-	AppRootDir = conf.GetString("app_queue_dir")
-	AppUseLimit = conf.GetInt("app_use_limit")
-	AppIdleLimit = conf.GetInt("app_idle_limit")
-	AppQuickAbort = conf.GetBool("app_quick_abort")
-	AppWaitLimit = conf.GetInt("app_wait_limit")
-	AppAccessAllow = conf.GetString("app_access_allow")
-	Appthreads = conf.GetInt("app_threads")
+	AppRootDir = AppConf.GetString("app_queue_dir")
+	AppUseLimit = AppConf.GetInt("app_use_limit")
+	AppIdleLimit = AppConf.GetInt("app_idle_limit")
+	AppQuickAbort = AppConf.GetBool("app_quick_abort")
+	AppWaitLimit = AppConf.GetInt("app_wait_limit")
+	AppAccessAllow = AppConf.GetString("app_access_allow")
+	Appthreads = AppConf.GetInt("app_threads")
 	if Appthreads > 0 {
 		runtime.GOMAXPROCS(Appthreads)
 	}
+
+	TlsCertFile = AppConf.GetString("tls_cert_file")
+	TlsKeyFile = AppConf.GetString("tls_key_file")
 
 	log.Printf("Args: %s, AppAccessAllow: %s\r\n", MasterArgs, AppAccessAllow)
 }
@@ -196,8 +203,8 @@ func chroot() {
 // and call this function to listen the given addrs
 func GetListenersByAddrs(addrs string) ([]net.Listener, error) {
 	if len(addrs) == 0 {
-		log.Println("No valid addrs for listening")
-		return nil, errors.New("No valid addrs for listening")
+		log.Println("no valid addresses for listening")
+		return nil, errors.New("no valid addresses for listening")
 	}
 
 	// split addrs like "xxx.xxx.xxx.xxx:port; xxx.xxx.xxx.xxx:port"
@@ -218,8 +225,8 @@ func GetListenersByAddrs(addrs string) ([]net.Listener, error) {
 		log.Println("Listen", addr, "error:", err)
 	}
 	if len(listeners) == 0 {
-		log.Println("No listeners were createdd")
-		return nil, errors.New("No listeners were created")
+		log.Println("no listeners were created")
+		return nil, errors.New("no listeners were created")
 	}
 	return listeners, nil
 }
@@ -229,7 +236,7 @@ func GetListenersByAddrs(addrs string) ([]net.Listener, error) {
 func GetListeners() ([]net.Listener, error) {
 	listeners := []net.Listener(nil)
 	for fd := listenFdStart; fd < listenFdStart+listenFdCount; fd++ {
-		file := os.NewFile(uintptr(fd), "open one listenfd")
+		file := os.NewFile(uintptr(fd), "open one listen fd")
 		if file == nil {
 			log.Printf("os.NewFile failed for fd=%d", fd)
 			continue
@@ -251,7 +258,7 @@ func GetListeners() ([]net.Listener, error) {
 
 	if len(listeners) == 0 {
 		log.Println("No listener created!")
-		return nil, errors.New("No listener created")
+		return nil, errors.New("no listener created")
 	} else {
 		log.Printf("Listeners's len=%d", len(listeners))
 	}
@@ -271,7 +278,7 @@ func ServiceInit(addrs string, stopHandler func(bool)) ([]net.Listener, error) {
 		initHandler()
 	}
 
-	// if addrs not empty, alone mode will be used, or daemon mode be used
+	// if addresses not empty, alone mode will be used, or daemon mode be used
 
 	var listeners []net.Listener
 	var daemonMode bool
@@ -295,7 +302,7 @@ func ServiceInit(addrs string, stopHandler func(bool)) ([]net.Listener, error) {
 
 	if len(listeners) == 0 {
 		log.Println("No listener available!")
-		return nil, errors.New("No listener available")
+		return nil, errors.New("no listener available")
 	}
 
 	// In daemon mode, the backend monitor fiber will be created for

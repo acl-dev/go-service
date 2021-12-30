@@ -48,7 +48,7 @@ func WebDaemonStart(handler http.Handler) error{
 	return WebStart("", handler)
 }
 
-// start WEB service with the specified listening addrs
+// WebStart start WEB service with the specified listening addrs
 func WebStart(addrs string, handler http.Handler) error {
 	var listeners []net.Listener
 	listeners, err := ServiceInit(addrs, webStop)

@@ -35,6 +35,8 @@ var (
 )
 
 func main() {
+	fmt.Println("Current master-go version:", master.Version)
+
 	flag.StringVar(&listenAddrs, "listen", "127.0.0.1:28880, 127.0.0.1:28881",
 		"listen addr in alone running")
 

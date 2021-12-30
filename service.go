@@ -76,8 +76,11 @@ var (
 	MasterUnprivileged bool
 	//	MasterChroot       bool
 	MasterSocketCount int = 1
+
 	Alone             bool
 )
+
+const Version string = "1.0.3"
 
 // setOpenMax set the max opened file handles for current process which let
 // the process can handle more connections.
@@ -262,7 +265,7 @@ func chroot() {
 func GetListenersByAddrs(addrs string) ([]net.Listener, error) {
 	if len(addrs) == 0 {
 		log.Println("No valid addrs for listening")
-		return nil, errors.New("No valid addrs for listening")
+		return nil, errors.New("no valid addrs for listening")
 	}
 
 	// split addrs like "xxx.xxx.xxx.xxx:port; xxx.xxx.xxx.xxx:port"
@@ -283,7 +286,7 @@ func GetListenersByAddrs(addrs string) ([]net.Listener, error) {
 		log.Println("Listen", addr, "error:", err)
 	}
 	if len(listeners) == 0 {
-		return nil, errors.New("No listeners were created!")
+		return nil, errors.New("no listeners were created!")
 	}
 	return listeners, nil
 }
@@ -293,7 +296,7 @@ func GetListenersByAddrs(addrs string) ([]net.Listener, error) {
 func GetListeners() ([]net.Listener, error) {
 	listeners := []net.Listener(nil)
 	for fd := listenFdStart; fd < listenFdStart+listenFdCount; fd++ {
-		file := os.NewFile(uintptr(fd), "open one listenfd")
+		file := os.NewFile(uintptr(fd), "open one listen fd")
 		if file == nil {
 			log.Printf("os.NewFile failed for fd=%d", fd)
 			continue
@@ -315,7 +318,7 @@ func GetListeners() ([]net.Listener, error) {
 
 	if len(listeners) == 0 {
 		log.Println("No listener created!")
-		return nil, errors.New("No listener created")
+		return nil, errors.New("no listener created")
 	} else {
 		log.Printf("Listeners's len=%d\r\n", len(listeners))
 	}
@@ -359,7 +362,7 @@ func ServiceInit(addrs string, stopHandler func(bool)) ([]net.Listener, error) {
 
 	if len(listeners) == 0 {
 		log.Println("No listener available!")
-		return nil, errors.New("No listener available")
+		return nil, errors.New("no listener available")
 	}
 
 	// In daemon mode, the backend monitor fiber will be created for

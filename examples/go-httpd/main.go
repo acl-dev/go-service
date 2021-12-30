@@ -25,6 +25,8 @@ var (
 )
 
 func main() {
+	fmt.Println("Current master-go version:", master.Version)
+
 	flag.Parse()
 
 	master.Prepare()

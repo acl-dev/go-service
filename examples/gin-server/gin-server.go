@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"net"
 	"sync"
@@ -44,6 +45,8 @@ func parseArgs()  {
 }
 
 func main()  {
+	fmt.Println("Current master-go version:", master.Version)
+
 	// parse args from commandline or acl_master's exec
 	parseArgs()
 
