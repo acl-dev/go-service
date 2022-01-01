@@ -62,23 +62,23 @@ func main() {
 
     master.Prepare()
 
-	// Bind the given addresses from commandline or from master framework.
-	service, err := master.TcpServiceInit(listenAddrs)
-	if err != nil {
-		log.Println("Init tcp service error:", err)
-		return
-	}
+    // Bind the given addresses from commandline or from master framework.
+    service, err := master.TcpServiceInit(listenAddrs)
+    if err != nil {
+        log.Println("Init tcp service error:", err)
+        return
+    }
 
-	// Set callback when accepting one connection.
-	service.AcceptHandler = onAccept
+    // Set callback when accepting one connection.
+    service.AcceptHandler = onAccept
 
-	// Set callback when closing one connection.
-	service.CloseHandler = onClose
+    // Set callback when closing one connection.
+    service.CloseHandler = onClose
 
-	fmt.Printf("listen: %s\r\n", listenAddrs)
+    fmt.Printf("listen: %s\r\n", listenAddrs)
 
-	// Start the service in alone or daemon mode.
-	service.Run()
+    // Start the service in alone or daemon mode.
+    service.Run()
 }
 ```
 编译：
