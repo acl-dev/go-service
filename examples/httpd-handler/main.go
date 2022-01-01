@@ -52,15 +52,12 @@ func main() {
 	master.Prepare()
 
 	handler := MyHandler{ "shoes": 50, "socks": 5 }
-	var err error
 
 	if master.Alone {
 		fmt.Println("listen:", listenAddrs)
-		err = master.WebAloneStart(listenAddrs, handler)
-	} else {
-		// daemon mode in master framework
-		err = master.WebDaemonStart(handler)
 	}
+
+	err := master.WebServiceStart(listenAddrs, handler)
 	if err != nil {
 		log.Println("Start webserver failed:", err)
 	}

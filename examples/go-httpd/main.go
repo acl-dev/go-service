@@ -33,15 +33,21 @@ func main() {
 
 	http.HandleFunc("/", handler)
 
-	var err error
 	if master.Alone {
 		fmt.Println("listen:", listenAddrs)
-		err = master.WebAloneStart(*listenAddrs, nil)
-	} else {
-		// daemon mode in master framework
-		err = master.WebDaemonStart(nil)
 	}
+
+	/*
+	err := master.WebServiceStart(*listenAddrs, nil)
 	if err != nil {
 		log.Println("Start webserver failed:", err)
+	}
+	*/
+
+	service, err := master.WebServiceInit(*listenAddrs, nil);
+	if err != nil {
+		log.Println("Init webservice failed:", err)
+	} else {
+		service.Run()
 	}
 }

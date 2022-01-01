@@ -1,17 +1,17 @@
 package master
 
 import (
-	"errors"
 	"log"
 	"net"
 	"net/http"
 	"os"
 )
 
-var (
-	daemonMode = false
-	webServers []*http.Server
-)
+type WebService struct {
+	listeners []net.Listener
+	webServs []*http.Server
+	handler http.Handler
+}
 
 func pathExist(path string) bool {
 	_, err := os.Stat(path)
@@ -21,11 +21,9 @@ func pathExist(path string) bool {
 	return true
 }
 
-func webServ(ln net.Listener, daemon bool, handler http.Handler) {
-	serv := &http.Server{ Handler: handler }
-	if daemon {
-		webServers = append(webServers, serv)
-	}
+func (service *WebService) webServ(ln net.Listener) {
+	serv := &http.Server{ Handler: service.handler }
+	service.webServs = append(service.webServs, serv)
 
 	if len(TlsCertFile) > 0 && len(TlsKeyFile) > 0 &&
 		pathExist(TlsCertFile) && pathExist(TlsKeyFile) {
@@ -36,39 +34,14 @@ func webServ(ln net.Listener, daemon bool, handler http.Handler) {
 	}
 }
 
-func WebAloneStart(addrs string, handler http.Handler) error {
-	if len(addrs) == 0 {
-		log.Println("addrs empty")
-		return errors.New("addrs empty")
-	}
-	return WebStart(addrs, handler)
-}
-
-func WebDaemonStart(handler http.Handler) error{
-	return WebStart("", handler)
-}
-
-// WebStart start WEB service with the specified listening addrs
-func WebStart(addrs string, handler http.Handler) error {
-	var listeners []net.Listener
-	listeners, err := ServiceInit(addrs, webStop)
-	if err != nil {
-		log.Println("ServiceInit failed:", err)
-		return err
-	}
-
-	if len(addrs) > 0 {
-		daemonMode = false
-	} else {
-		daemonMode = true
-	}
-
-	for _, ln := range listeners {
+// WebServiceStart start WEB service with the specified listening addrs
+func (service *WebService) Run() {
+	for _, ln := range service.listeners {
 		// create fiber for each listener to accept connections
-		go webServ(ln, daemonMode, handler)
+		go service.webServ(ln)
 	}
 
-	log.Println("service started!")
+	log.Println("webservice started!")
 	res := <-doneChan
 
 	close(doneChan)
@@ -79,10 +52,31 @@ func WebStart(addrs string, handler http.Handler) error {
 	}
 
 	if res {
-		log.Println("service stopped normal!")
+		log.Println("webservice stopped normal!")
 	} else {
-		log.Println("service stopped abnormal!")
+		log.Println("webservice stopped abnormal!")
 	}
+}
+
+func WebServiceInit(addrs string, handler http.Handler) (*WebService, error) {
+	listeners, err := ServiceInit(addrs, webStop)
+	if err != nil {
+		log.Println("ServiceInit failed:", err)
+		return nil, err
+	}
+
+	return &WebService { listeners: listeners, handler: handler }, nil
+}
+
+// WebServiceStart start WEB service with the specified listening addrs
+func WebServiceStart(addrs string, handler http.Handler) error {
+	service, err := WebServiceInit(addrs, handler)
+	if err != nil {
+		log.Println("ServiceInit failed:", err)
+		return err
+	}
+
+	service.Run()
 	return nil
 }
 

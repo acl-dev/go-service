@@ -40,12 +40,15 @@ func main() {
 	flag.StringVar(&listenAddrs, "listen", "127.0.0.1:28880, 127.0.0.1:28881",
 		"listen addr in alone running")
 
+	// Parse the commandline args.
 	flag.Parse()
 
+	// Parse commandline args needed internal, load configure info.
 	master.Prepare()
 
 	fmt.Printf("MasterServiceType=%s\r\n", master.MasterServiceType)
 
+	/*
 	master.OnClose(onClose)
 	master.OnAccept(onAccept)
 
@@ -60,4 +63,23 @@ func main() {
 	if err != nil {
 		log.Println("start tcp server error:", err)
 	}
+    */
+
+	// Bind the given addresses from commandline or from master framework.
+	service, err := master.TcpServiceInit(listenAddrs)
+	if err != nil {
+		log.Println("Init tcp service error:", err)
+		return
+	}
+
+	// Set callback when accepting one connection.
+	service.AcceptHandler = onAccept
+
+	// Set callback when closing one connection.
+	service.CloseHandler = onClose
+
+	fmt.Printf("listen: %s\r\n", listenAddrs)
+
+	// Start the service in alone or daemon mode.
+	service.Run()
 }

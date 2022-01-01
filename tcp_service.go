@@ -11,22 +11,24 @@ import (
 type AcceptFunc func(net.Conn)
 type CloseFunc func(net.Conn)
 
-var (
-	acceptHandler AcceptFunc = nil
-	closeHandler  CloseFunc  = nil
-)
+type TcpService struct {
+	AcceptHandler AcceptFunc
+	CloseHandler  CloseFunc
 
-func handleConn(conn net.Conn) {
-	if acceptHandler == nil {
+	listeners []net.Listener
+}
+
+func (service *TcpService) handleConn(conn net.Conn) {
+	if service.AcceptHandler == nil {
 		panic("acceptHandler nil")
 	}
 
 	connCountInc()
 
-	acceptHandler(conn)
+	service.AcceptHandler(conn)
 
-	if closeHandler != nil {
-		closeHandler(conn)
+	if service.CloseHandler != nil {
+		service.CloseHandler(conn)
 	} else {
 		log.Println("closeHandler nil")
 	}
@@ -36,7 +38,7 @@ func handleConn(conn net.Conn) {
 	connCountDec()
 }
 
-func loopAccept(ln net.Listener) {
+func (service *TcpService) loopAccept(ln net.Listener) {
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
@@ -45,7 +47,7 @@ func loopAccept(ln net.Listener) {
 			break
 		}
 
-		go handleConn(conn)
+		go service.handleConn(conn)
 	}
 
 	if stopping {
@@ -56,42 +58,10 @@ func loopAccept(ln net.Listener) {
 	}
 }
 
-func OnAccept(handler AcceptFunc) {
-	for _, arg := range os.Args {
-		log.Println("arg=", arg)
-	}
-
-	acceptHandler = handler
-}
-
-func OnClose(handler CloseFunc) {
-	closeHandler = handler
-}
-
-func TcpAloneStart(addrs string) error {
-	if len(addrs) == 0 {
-		log.Println("Addrs empty")
-		return errors.New("Addrs empty")
-	}
-	return TcpStart(addrs)
-}
-
-func TcpDaemonStart() error {
-	return TcpStart("")
-}
-
-// TcpStart start TCP service with the specified listening addrs
-func TcpStart(addrs string) error {
-	var listeners []net.Listener
-	listeners, err := ServiceInit(addrs, tcpStop)
-	if err != nil {
-		log.Println("ServiceInit failed:", err)
-		return err
-	}
-
-	for _, ln := range listeners {
+func (service *TcpService) Run()  {
+	for _, ln := range service.listeners {
 		// create fiber for each listener to accept connections
-		go loopAccept(ln)
+		go service.loopAccept(ln)
 	}
 
 	log.Println("service started!")
@@ -111,6 +81,56 @@ func TcpStart(addrs string) error {
 	} else {
 		log.Println("service stopped abnormal!")
 	}
+}
+
+func TcpServiceInit(addrs string) (*TcpService, error) {
+	listeners, err := ServiceInit(addrs, tcpStop)
+	if err != nil {
+		log.Println("ServiceInit failed:", err)
+		return nil, err
+	}
+	return &TcpService{ listeners: listeners }, nil
+}
+
+var (
+	acceptHandler AcceptFunc = nil
+	closeHandler  CloseFunc  = nil
+)
+
+func OnAccept(handler AcceptFunc) {
+	for _, arg := range os.Args {
+		log.Println("arg=", arg)
+	}
+
+	acceptHandler = handler
+}
+
+func OnClose(handler CloseFunc) {
+	closeHandler = handler
+}
+
+func TcpAloneStart(addrs string) error {
+	if len(addrs) == 0 {
+		log.Println("Addrs empty")
+		return errors.New("Addrs empty")
+	}
+	return TcpServiceStart(addrs)
+}
+
+func TcpDaemonStart() error {
+	return TcpServiceStart("")
+}
+
+// TcpStart start TCP service with the specified listening addrs
+func TcpServiceStart(addrs string) error {
+	service, err := TcpServiceInit(addrs)
+	if err != nil {
+		return err
+	}
+
+	service.CloseHandler = closeHandler
+	service.AcceptHandler = acceptHandler
+	service.Run()
 	return nil
 }
 

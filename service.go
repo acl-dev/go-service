@@ -23,13 +23,13 @@ const (
 )
 
 var (
-	listenFdCount int = 1
-	confPath      string
-	sockType      string
-	services      string
-	privilege     bool = false
-	verbose       bool = false
-	chrootOn      bool = false
+	listenFdCount = 0
+	confPath        string
+	sockType        string
+	services        string
+	privilege     = false
+	verbose       = false
+	chrootOn      = false
 )
 
 type PreJailFunc func()
@@ -40,11 +40,11 @@ var (
 	preJailHandler PreJailFunc = nil
 	initHandler    InitFunc    = nil
 	exitHandler    ExitFunc    = nil
-	doneChan       chan bool   = make(chan bool)
-	connCount      int         = 0
-	connMutex      sync.RWMutex
-	stopping       bool = false
-	prepareCalled  bool = false
+	doneChan      = make(chan bool)
+	connCount     = 0
+	connMutex       sync.RWMutex
+	stopping      = false
+	prepareCalled = false
 )
 
 // from command args
@@ -55,7 +55,7 @@ var (
 	MasterVerbose      bool
 	MasterUnprivileged bool
 	//	MasterChroot       bool
-	MasterSocketCount int = 1
+	MasterSocketCount = 1
 
 	Alone             bool
 )
@@ -106,9 +106,6 @@ func parseArgs() {
 			i++
 			if i < n {
 				listenFdCount, _ = strconv.Atoi(os.Args[i])
-				if listenFdCount <= 0 {
-					listenFdCount = 1
-				}
 			}
 		case "-f":
 			i++
@@ -230,6 +227,7 @@ func GetListenersByAddrs(addrs string) ([]net.Listener, error) {
 
 		log.Println("Listen", addr, "error:", err)
 	}
+
 	if len(listeners) == 0 {
 		return nil, errors.New("no listeners were created!")
 	}
@@ -240,7 +238,7 @@ func GetListenersByAddrs(addrs string) ([]net.Listener, error) {
 // init the listener handles.
 func GetListeners() ([]net.Listener, error) {
 	listeners := []net.Listener(nil)
-	for fd := listenFdStart; fd < listenFdStart+listenFdCount; fd++ {
+	for fd := listenFdStart; fd < listenFdStart + listenFdCount; fd++ {
 		file := os.NewFile(uintptr(fd), "open one listen fd")
 		if file == nil {
 			log.Printf("os.NewFile failed for fd=%d", fd)
@@ -287,15 +285,12 @@ func ServiceInit(addrs string, stopHandler func(bool)) ([]net.Listener, error) {
 
 	var listeners []net.Listener
 	var daemonMode bool
-	
-	if len(addrs) > 0 {
-		var err error
-		listeners, err = GetListenersByAddrs(addrs)
-		if err != nil {
-			return nil, err
-		}
-		daemonMode = false
-	} else {
+
+	// If alone is false and listenFdCount more than 0, we'll start the service in daemon mode,
+	// else we'll start the service in alone mode. The listenFdCount is coming from the the
+	// master service framework.
+
+	if !Alone && listenFdCount > 0 {
 		var err error
 		listeners, err = GetListeners()
 		if err != nil {
@@ -303,6 +298,16 @@ func ServiceInit(addrs string, stopHandler func(bool)) ([]net.Listener, error) {
 			return nil, err
 		}
 		daemonMode = true
+	} else if len(addrs) > 0 {
+		var err error
+		listeners, err = GetListenersByAddrs(addrs)
+		if err != nil {
+			return nil, err
+		}
+		daemonMode = false
+	} else {
+		log.Println("addrs empty in alone running mode")
+		return nil, errors.New("no addresses given in alone running mode")
 	}
 
 	if len(listeners) == 0 {
