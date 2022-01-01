@@ -40,37 +40,45 @@ func onAccept(conn net.Conn) {
             break
         }
 
-        conn.Write(buf[0:n])
+        _, err = conn.Write(buf[0:n])
+        if err != nil {
+            fmt.Println("write wrror", err)
+            break
+        }
     }
 }
 
 func onClose(conn net.Conn) {
-    log.Println("---client onClose---")
+    log.Println("---client onClose---", conn.RemoteAddr())
 }
 
 var (
-    filePath    string
     listenAddrs string
 )
 
 func main() {
-    flag.StringVar(&filePath, "c", "dummy.cf", "configure filePath")
     flag.StringVar(&listenAddrs, "listen", "127.0.0.1:8080; 127.0.0.1:8081", "listen addr in alone running")
-
     flag.Parse()
 
     master.Prepare()
-    master.OnClose(onClose)
-    master.OnAccept(onAccept)
 
-    if master.Alone {
-        // run alone
-        fmt.Printf("listen: %s\r\n", listenAddrs)
-        master.TcpStart(listenAddrs)
-    } else {
-        // daemon mode in acl_master framework
-        master.TcpStart("")
-    }
+	// Bind the given addresses from commandline or from master framework.
+	service, err := master.TcpServiceInit(listenAddrs)
+	if err != nil {
+		log.Println("Init tcp service error:", err)
+		return
+	}
+
+	// Set callback when accepting one connection.
+	service.AcceptHandler = onAccept
+
+	// Set callback when closing one connection.
+	service.CloseHandler = onClose
+
+	fmt.Printf("listen: %s\r\n", listenAddrs)
+
+	// Start the service in alone or daemon mode.
+	service.Run()
 }
 ```
 编译：
@@ -119,7 +127,7 @@ $ ./echod -alone
 
 最后运行 **`acl_master`** 服务框架中的管理工具来查看由 **`acl_master`** 管理的服务：
 ```
-#/opt/soft/acl-master/bin/master-ctl -a list
+#/opt/soft/acl-master/bin/master_ctl -a list
 ```
 结果显示如下：
 

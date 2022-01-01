@@ -26,8 +26,8 @@ func onAccept(conn net.Conn) {
 	}
 }
 
-func onClose(net.Conn) {
-	log.Println("---client onClose---")
+func onClose(conn net.Conn) {
+	log.Println("---client onClose---", conn.RemoteAddr())
 }
 
 var (
