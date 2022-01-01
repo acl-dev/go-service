@@ -81,7 +81,7 @@ func main()  {
 	// Wait for all listeners to stop.
 	g.Wait()
 
-	log.Println("gin-server: All services stopped!\r\n")
+	log.Println("gin-server: All services stopped!")
 }
 
 // The callback used in master.ServiceInit() for the second arg, when the server
