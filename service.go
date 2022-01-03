@@ -49,15 +49,15 @@ var (
 
 // from command args
 var (
-	MasterConfigure    string
-	MasterServiceName  string
-	MasterServiceType  string
-	MasterVerbose      bool
-	MasterUnprivileged bool
-	//	MasterChroot       bool
-	MasterSocketCount = 1
+	Configure     string
+	ServiceName   string
+	ServiceType   string
+	Verbose       bool
+	Unprivileged  bool
+	Chroot      = false
+	SocketCount = 1
 
-	Alone             bool
+	Alone         bool
 )
 
 // setOpenMax set the max opened file handles for current process which let
@@ -83,14 +83,17 @@ func setOpenMax() {
 // initFlags init the command args come from acl_master; the application should call
 // flag.Parse() in its main function!
 func initFlags() {
-	flag.StringVar(&MasterConfigure, "f", "", "app configure file")
-	flag.StringVar(&MasterServiceName, "n", "", "app service name")
-	flag.StringVar(&MasterServiceType, "t", "sock", "app service type")
+	flag.StringVar(&Configure, "f", "", "app configure file")
+	flag.StringVar(&ServiceName, "n", "", "app service name")
+	flag.StringVar(&ServiceType, "t", "sock", "app service type")
 	flag.BoolVar(&Alone, "alone", false, "stand alone running")
-	flag.BoolVar(&MasterVerbose, "v", false, "app verbose")
-	flag.BoolVar(&MasterUnprivileged, "u", false, "app unprivileged")
-	//	flag.BoolVar(&MasterChroot, "c", false, "app chroot")
-	flag.IntVar(&MasterSocketCount, "s", 1, "listen fd count")
+	flag.BoolVar(&Verbose, "v", false, "app verbose")
+	flag.BoolVar(&Unprivileged, "u", false, "app unprivileged")
+	flag.BoolVar(&Chroot, "c", false, "app chroot")
+	flag.IntVar(&SocketCount, "s", 1, "listen fd count")
+	if Verbose || verbose {
+		log.Println("service:", ServiceName, "conf:", Configure)
+	}
 }
 
 func init() {
@@ -102,32 +105,32 @@ func parseArgs() {
 	var n = len(os.Args)
 	for i := 0; i < n; i++ {
 		switch os.Args[i] {
-		case "-s":
-			i++
-			if i < n {
-				listenFdCount, _ = strconv.Atoi(os.Args[i])
-			}
 		case "-f":
 			i++
 			if i < n {
 				confPath = os.Args[i]
-			}
-		case "-t":
-			i++
-			if i < n {
-				sockType = os.Args[i]
 			}
 		case "-n":
 			i++
 			if i < n {
 				services = os.Args[i]
 			}
-		case "-u":
-			privilege = true
+		case "-t":
+			i++
+			if i < n {
+				sockType = os.Args[i]
+			}
 		case "-v":
 			verbose = true
+		case "-u":
+			privilege = true
 		case "-c":
 			chrootOn = true
+		case "-s":
+			i++
+			if i < n {
+				listenFdCount, _ = strconv.Atoi(os.Args[i])
+			}
 		}
 	}
 
@@ -229,7 +232,7 @@ func GetListenersByAddrs(addrs string) ([]net.Listener, error) {
 	}
 
 	if len(listeners) == 0 {
-		return nil, errors.New("no listeners were created!")
+		return nil, errors.New("no listeners were created")
 	}
 	return listeners, nil
 }

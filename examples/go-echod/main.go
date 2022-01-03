@@ -46,7 +46,7 @@ func main() {
 	// Parse commandline args needed internal, load configure info.
 	master.Prepare()
 
-	fmt.Printf("MasterServiceType=%s\r\n", master.MasterServiceType)
+	fmt.Printf("ServiceType=%s\r\n", master.ServiceType)
 
 	/*
 	master.OnClose(onClose)
