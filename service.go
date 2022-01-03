@@ -153,13 +153,13 @@ func Prepare() {
 }
 
 func chroot() {
-	if len(MasterArgs) == 0 || !privilege || len(MasterOwner) == 0 {
+	if len(AppArgs) == 0 || !privilege || len(AppOwner) == 0 {
 		return
 	}
 
-	u, err := user.Lookup(MasterOwner)
+	u, err := user.Lookup(AppOwner)
 	if err != nil {
-		log.Printf("Lookup %s error %s", MasterOwner, err)
+		log.Printf("Lookup %s error %s", AppOwner, err)
 	} else {
 		gid, err := strconv.Atoi(u.Gid)
 		if err != nil {
@@ -189,7 +189,7 @@ func chroot() {
 		// think that the call succeeded.
 		// But I wrote a sample that using setuid and setgid after
 		// creating some threads, thease threads' uid and gid were
-		// changed to the // uid or gid by calling setuid and setgid, why?
+		// changed to the uid or gid by calling setuid and setgid, why?
 		err := syscall.Chroot(AppRootDir)
 		if err != nil {
 			log.Printf("Chroot error %s, path %s", err, AppRootDir)
@@ -363,25 +363,29 @@ func monitorMaster(listeners []net.Listener,
 	n = 0
 	i = 0
 
-	for {
-		connMutex.RLock()
-		if connCount <= 0 {
-			connMutex.RUnlock()
-			break
-		}
+	if AppQuickAbort {
+		log.Println("app_quick_abort been set")
+	} else {
+		for {
+			connMutex.RLock()
+			if connCount <= 0 {
+				connMutex.RUnlock()
+				break
+			}
 
-		n = connCount
-		connMutex.RUnlock()
-		time.Sleep(time.Second) // sleep 1 second
-		i++
-		log.Printf("Exiting, clients=%d, sleep=%d seconds\r\n", n, i)
-		if AppWaitLimit > 0 && i >= AppWaitLimit {
-			log.Printf("Waiting too long >= %d", AppWaitLimit)
-			break
+			n = connCount
+			connMutex.RUnlock()
+			time.Sleep(time.Second) // sleep 1 second
+			i++
+			log.Printf("Exiting, clients=%d, sleep=%d seconds\r\n", n, i)
+			if AppWaitLimit > 0 && i >= AppWaitLimit {
+				log.Printf("Waiting too long >= %d", AppWaitLimit)
+				break
+			}
 		}
 	}
 
-	log.Println("Master disconnected, exiting now")
+	log.Println("master service disconnected, exiting now")
 
 	if stopHandler != nil {
 		stopHandler(true)
