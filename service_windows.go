@@ -136,13 +136,13 @@ func Prepare() {
 }
 
 func chroot() {
-	if len(MasterArgs) == 0 || !privilege || len(MasterOwner) == 0 {
+	if len(AppArgs) == 0 || !privilege || len(AppOwner) == 0 {
 		return
 	}
 
-	_, err := user.Lookup(MasterOwner)
+	_, err := user.Lookup(AppOwner)
 	if err != nil {
-		log.Printf("Lookup %s error %s", MasterOwner, err)
+		log.Printf("Lookup %s error %s", AppOwner, err)
 	}
 }
 
