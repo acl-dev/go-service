@@ -58,11 +58,7 @@ func main()  {
 	// the listeners' fds were created by acl_master and transfered to the
 	// children processes after fork/exec.
 
-	if master.Alone {
-		listener, err = master.ServiceInit(listenAddrs, nil)
-	} else {
-		listener, err = master.ServiceInit("", onStop)
-	}
+	listener, err = master.ServiceInit(listenAddrs, onStop)
 	if err != nil {
 		log.Println("Listen error:", err)
 		return

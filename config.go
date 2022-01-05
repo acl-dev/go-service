@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-const Version string = "1.0.5"
+const Version string = "1.0.7"
 
 type Config struct {
 	Entries map[string]string

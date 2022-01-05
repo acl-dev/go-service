@@ -9,7 +9,6 @@ import (
 )
 
 var (
-	filePath    string
 	listenAddrs string
 )
 
@@ -45,7 +44,6 @@ func (handler MyHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 func main() {
 	fmt.Println("Current master-go version:", master.Version)
 
-	flag.StringVar(&filePath, "c", "dummy.cf", "configure filePath")
 	flag.StringVar(&listenAddrs, "listen", "127.0.0.1:8088", "listen addr in alone running")
 	flag.Parse()
 

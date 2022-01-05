@@ -90,7 +90,7 @@ func initFlags() {
 	flag.BoolVar(&Verbose, "v", false, "app verbose")
 	flag.BoolVar(&Unprivileged, "u", false, "app unprivileged")
 	flag.BoolVar(&Chroot, "c", false, "app chroot")
-	flag.IntVar(&SocketCount, "s", 1, "listen fd count")
+	flag.IntVar(&SocketCount, "s", 0, "listen fd count")
 	if Verbose || verbose {
 		log.Println("service:", ServiceName, "conf:", Configure)
 	}
