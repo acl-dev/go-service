@@ -1,8 +1,8 @@
-service httpd-handler {
+service grpc-server {
 #	进程是否禁止运行
 	master_disable = no
 #	服务地址及端口号
-	master_service = 127.0.0.1|8882, httpd-handler.sock
+	master_service = 127.0.0.1|8885, grpc-server.sock
 
 #	服务类型
 	master_type = sock
@@ -29,11 +29,12 @@ service httpd-handler {
 #	预启动进程数，该值不得大于 master_maxproc
 	master_prefork = 2
 #	进程程序名
-	master_command = {install_path}/sbin/httpd-handler
+	master_command = {install_path}/sbin/grpc-server
 #	进程日志记录文件
-	master_log = {install_path}/var/log/httpd-handler.log
+	master_log = {install_path}/var/log/grpc-server.log
 #	进程运行时的用户身份
-#	master_owner = root
+	master_owner = root
+#	master_owner = nobody
 #	调试日志方式，格式：tag:level; tag:level; tab:level, 如：all:1; 101:2
 #	master_debug =
 #	进程启动参数
@@ -48,8 +49,6 @@ service httpd-handler {
 	app_idle_limit = 0
 #	进程运行时所在的路径
 	app_queue_dir = {install_path}/var
-#	该值 > 0 时则使用此值做为启动线程数
-	app_threads = 0
 
 #	当启用 master_dispatch 连接分开服务后，该配置指定 master_dispatch 所监听的
 #	域套接口的全路径，这样本子进程就可以从 master_dispatch 获得客户端连接

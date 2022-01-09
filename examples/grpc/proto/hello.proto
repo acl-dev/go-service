@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package hello;
+option go_package ="./";
+
+service Greets {
+	rpc SayHello(HelloRequest) returns (HelloReply) {}
+	rpc GetMessage(MessageRequest) returns(MessageReply) {}
+}
+
+message HelloRequest {
+	string Name = 1;
+	optional string Message = 2;
+}
+
+message HelloReply {
+	optional string Name = 1;
+	optional string Message = 2;
+}
+
+message MessageRequest {
+	string Message = 1;
+	int32 Age = 3;
+	optional int32 Min = 4;
+}
+
+message MessageReply {
+	string Message = 1;
+}
