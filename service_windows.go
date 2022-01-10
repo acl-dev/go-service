@@ -66,14 +66,17 @@ func setOpenMax() {
 // init the command args come from acl_master; the application should call
 // flag.Parse() in its main function!
 func initFlags() {
-	flag.StringVar(&Configure, "f", "", "app configure file")
-	flag.StringVar(&ServiceName, "n", "", "app service name")
-	flag.StringVar(&ServiceType, "t", "sock", "app service type")
-	flag.BoolVar(&Alone, "alone", false, "stand alone running")
-	flag.BoolVar(&Verbose, "v", false, "app verbose")
-	flag.BoolVar(&Unprivileged, "u", false, "app unprivileged")
-	flag.BoolVar(&Chroot, "c", false, "app chroot")
-	flag.IntVar(&SocketCount, "s", 1, "listen fd count")
+	// Just walk through all the internal args to avoid fatal error from flag parser,
+	// but these flags will be ignored, because we'll use the flags parsed in parseArgs().
+
+	flag.StringVar(&Configure, "f", "", "app configure file (internal)")
+	flag.StringVar(&ServiceName, "n", "", "app service name (internal)")
+	flag.StringVar(&ServiceType, "t", "sock", "app service type (internal)")
+	flag.BoolVar(&Alone, "alone", false, "stand alone running (internal)")
+	flag.BoolVar(&Verbose, "v", false, "app verbose (internal)")
+	flag.BoolVar(&Unprivileged, "u", false, "app unprivileged (internal)")
+	flag.BoolVar(&Chroot, "c", false, "app chroot (internal)")
+	flag.IntVar(&SocketCount, "s", 1, "listen fd count (internal)")
 }
 
 func init() {
@@ -89,9 +92,6 @@ func parseArgs() {
 			i++
 			if i < n {
 				listenFdCount, _ = strconv.Atoi(os.Args[i])
-				if listenFdCount <= 0 {
-					listenFdCount = 1
-				}
 			}
 		case "-f":
 			i++
