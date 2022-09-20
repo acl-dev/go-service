@@ -153,6 +153,11 @@ func (c Config) GetBool(name string) bool {
 	if !found {
 		return false
 	}
+
+	if val == "yes" || val == "true" || val == "y" {
+		return true
+	}
+
 	n, err := strconv.Atoi(val)
 	if err != nil {
 		return false

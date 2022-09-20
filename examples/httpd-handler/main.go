@@ -49,6 +49,10 @@ func main() {
 
 	master.Prepare()
 
+	log.Printf("ServiceType=%s, test_src=%s, test_bool=%t\r\n",
+		master.ServiceType, master.AppConf.GetString("test_src"),
+		master.AppConf.GetBool("test_bool"))
+
 	handler := MyHandler{ "shoes": 50, "socks": 5 }
 
 	if master.Alone {

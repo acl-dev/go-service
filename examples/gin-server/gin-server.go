@@ -64,6 +64,10 @@ func main()  {
 		return
 	}
 
+	log.Printf("ServiceType=%s, test_src=%s, test_bool=%t\r\n",
+		master.ServiceType, master.AppConf.GetString("test_src"),
+		master.AppConf.GetBool("test_bool"))
+
 	// Add the listener fibers' count in sync waiting group.
 	g.Add(len(listener))
 

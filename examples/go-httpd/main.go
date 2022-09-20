@@ -31,6 +31,10 @@ func main() {
 
 	master.Prepare()
 
+	fmt.Printf("ServiceType=%s, test_src=%s, test_bool=%t\r\n",
+		master.ServiceType, master.AppConf.GetString("test_src"),
+		master.AppConf.GetBool("test_bool"))
+
 	http.HandleFunc("/", handler)
 
 	if master.Alone {

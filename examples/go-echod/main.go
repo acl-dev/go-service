@@ -46,7 +46,9 @@ func main() {
 	// Parse commandline args needed internal, load configure info.
 	master.Prepare()
 
-	fmt.Printf("ServiceType=%s\r\n", master.ServiceType)
+	fmt.Printf("ServiceType=%s, test_src=%s, test_bool=%t\r\n",
+		master.ServiceType, master.AppConf.GetString("test_src"),
+		master.AppConf.GetBool("test_bool"))
 
 	/*
 	master.OnClose(onClose)
