@@ -1,11 +1,14 @@
+//go:build linux || darwin
 // +build linux darwin
 
 package master
 
 import (
+	"context"
 	"errors"
 	"flag"
 	"fmt"
+	"golang.org/x/sys/unix"
 	"log"
 	"net"
 	"os"
@@ -24,9 +27,9 @@ const (
 
 var (
 	listenFdCount = 1
-	confPath        string
-	sockType        string
-	services        string
+	confPath      string
+	sockType      string
+	services      string
 	privilege     = false
 	verbose       = false
 	chrootOn      = false
@@ -40,24 +43,24 @@ var (
 	preJailHandler PreJailFunc = nil
 	initHandler    InitFunc    = nil
 	exitHandler    ExitFunc    = nil
-	doneChan      = make(chan bool)
-	connCount     = 0
-	connMutex       sync.RWMutex
-	stopping      = false
-	prepareCalled = false
+	doneChan                   = make(chan bool)
+	connCount                  = 0
+	connMutex      sync.RWMutex
+	stopping       = false
+	prepareCalled  = false
 )
 
 // from command args
 var (
-	Configure     string
-	ServiceName   string
-	ServiceType   string
-	Verbose       bool
-	Unprivileged  bool
-	Chroot      = false
-	SocketCount = 1
+	Configure    string
+	ServiceName  string
+	ServiceType  string
+	Verbose      bool
+	Unprivileged bool
+	Chroot       = false
+	SocketCount  = 1
 
-	Alone         bool
+	Alone bool
 )
 
 // setOpenMax set the max opened file handles for current process which let
@@ -208,8 +211,8 @@ func chroot() {
 	}
 }
 
-// GetListenersByAddrs In run alone mode, the application should give the listening addrs
-// and call this function to listen the given addrs
+// GetListenersByAddrs In run alone mode, the application should give the
+// listening addrs and call this function to listen the given addrs
 func GetListenersByAddrs(addrs string) ([]net.Listener, error) {
 	if len(addrs) == 0 {
 		log.Println("No valid addrs for listening")
@@ -222,9 +225,17 @@ func GetListenersByAddrs(addrs string) ([]net.Listener, error) {
 	addrs = strings.Replace(addrs, ",", ";", -1)
 	tokens := strings.Split(addrs, ";")
 
+	cfg := net.ListenConfig{
+		Control: func(network, address string, c syscall.RawConn) error {
+			return c.Control(func(fd uintptr) {
+				syscall.SetsockoptInt(int(fd), syscall.SOL_SOCKET, unix.SO_REUSEADDR, 1)
+				syscall.SetsockoptInt(int(fd), syscall.SOL_SOCKET, unix.SO_REUSEPORT, 1)
+			})
+		},
+	}
 	listeners := []net.Listener(nil)
 	for _, addr := range tokens {
-		ln, err := net.Listen("tcp", addr)
+		ln, err := cfg.Listen(context.Background(), "tcp", addr)
 		if err == nil {
 			listeners = append(listeners, ln)
 			log.Printf("Listen %s ok\r\n", addr)
@@ -240,11 +251,11 @@ func GetListenersByAddrs(addrs string) ([]net.Listener, error) {
 	return listeners, nil
 }
 
-// GetListeners In acl_master daemon running mode, this function will be called to
-// init the listener handles.
+// GetListeners In acl_master daemon running mode, this function will be called
+// to init the listener handles.
 func GetListeners() ([]net.Listener, error) {
 	listeners := []net.Listener(nil)
-	for fd := listenFdStart; fd < listenFdStart + listenFdCount; fd++ {
+	for fd := listenFdStart; fd < listenFdStart+listenFdCount; fd++ {
 		file := os.NewFile(uintptr(fd), "open one listen fd")
 		if file == nil {
 			log.Printf("os.NewFile failed for fd=%d", fd)
@@ -292,9 +303,9 @@ func ServiceInit(addrs string, stopHandler func(bool)) ([]net.Listener, error) {
 	var listeners []net.Listener
 	var daemonMode bool
 
-	// If alone is false and sockType has been set, we'll start the service in daemon mode,
-	// else we'll start the service in alone mode. The sockType is coming from the the
-	// master service framework.
+	// If alone is false and sockType has been set, we'll start the service
+	// in daemon mode, else we'll start the service in alone mode. The sockType
+	// is coming from the the master service framework.
 
 	if !Alone && len(sockType) > 0 {
 		var err error
