@@ -10,7 +10,21 @@ service httpd-handler {
 #	当子进程异常退出时，如果该值非空，则将子进程异常退出的消息通知该服务
 #	master_notify_addr = 127.0.0.1:5801
 #	邮件通知接收者
-#	master_notify_recipients = zhengshuxin@hotmail.com
+#	master_notify_recipients = xxx@xxx.xxx.xxx
+
+#	停止子进程时是否采用强行停止的方式(即给子进程发送 SIGTERM 信号)
+	master_stop_kill = false
+#	当 master_stop_kill 为 true 时，该配置决定是否要等待子进程退出
+	master_stop_wait = false
+
+#	当系统支持 SO_REUSEPORT 时，是否启用该功能
+	master_reuseport = no
+#	当启用 SO_REUSEPORT 时(即 master_reuseport=yes 时), 是否需要 acl_master
+#	也监听该地址, 对于使用旧版 acl(< 3.5.3-17) 编写的服务, 必须将此项设为
+#	yes, 即: master_reuseport_listen = yes; 对于使用 acl 版本 >= 3.5.3-17
+#	编写的服务需设置为 no; 当 master_reuseport=no时,该项设置将被忽略; 当未
+#	设置此项时内部缺省值为 yes. 以便使 acl_master 保持对于旧版服务的兼容性.
+	master_reuseport_listen = no
 
 #	是否允许延迟接受客户端连接，如果为0则表示关闭该功能，如果大于0则表示打开此功能
 #	并且此值代表延迟接受连接的超时值，超过此值时如果客户端依然没有发来数据，则操作

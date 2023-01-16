@@ -223,6 +223,7 @@ func GetListenersByAddrs(addrs string) ([]net.Listener, error) {
 
 	addrs = strings.Replace(addrs, " ", "", -1)
 	addrs = strings.Replace(addrs, ",", ";", -1)
+	addrs = strings.Replace(addrs, "|", ":", -1)
 	tokens := strings.Split(addrs, ";")
 
 	cfg := net.ListenConfig{
@@ -309,7 +310,11 @@ func ServiceInit(addrs string, stopHandler func(bool)) ([]net.Listener, error) {
 
 	if !Alone && len(sockType) > 0 {
 		var err error
-		listeners, err = GetListeners()
+		if AppReusePort && len(AppService) > 0 {
+			listeners, err = GetListenersByAddrs(AppService)
+		} else {
+			listeners, err = GetListeners()
+		}
 		if err != nil {
 			log.Println("GetListeners failed", err)
 			return nil, err

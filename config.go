@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-const Version string = "1.0.8"
+const Version string = "1.0.9"
 
 type Config struct {
 	Entries map[string]string
@@ -19,21 +19,22 @@ type Config struct {
 
 // from configure file of the app
 var (
-	AppConf         *Config
-	AppService       string
-	AppLogPath       string
-	AppOwner         string
-	AppArgs          string
-	AppRootDir       string
+	AppConf        *Config
+	AppService     string
+	AppLogPath     string
+	AppOwner       string
+	AppArgs        string
+	AppRootDir     string
 	AppUseLimit    = 0
 	AppIdleLimit   = 0
+	AppReusePort   = false
 	AppQuickAbort  = false
 	AppWaitLimit   = 10
 	AppAccessAllow = "all"
 	Appthreads     = 0
 
-	TlsCertFile      string
-	TlsKeyFile       string
+	TlsCertFile string
+	TlsKeyFile  string
 )
 
 func loadConf(confPath string) {
@@ -54,6 +55,7 @@ func loadConf(confPath string) {
 	AppService = AppConf.GetString("master_service")
 	AppOwner = AppConf.GetString("master_owner")
 	AppArgs = AppConf.GetString("master_args")
+	AppReusePort = AppConf.GetBool("master_reuseport")
 
 	AppRootDir = AppConf.GetString("app_queue_dir")
 	AppUseLimit = AppConf.GetInt("app_use_limit")
