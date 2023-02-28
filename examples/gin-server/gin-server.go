@@ -44,6 +44,9 @@ func startServer(listener net.Listener)  {
 					fmt.Printf("New connectioin from %s\r\n", conn.RemoteAddr())
 					break
 				case http.StateClosed:
+					master.ConnCountDec()
+					fmt.Printf("Close connectioin from %s\r\n", conn.RemoteAddr())
+					break
 				case http.StateHijacked:
 					master.ConnCountDec()
 					fmt.Printf("Close connectioin from %s\r\n", conn.RemoteAddr())
