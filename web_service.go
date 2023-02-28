@@ -1,6 +1,7 @@
 package master
 
 import (
+	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -22,7 +23,34 @@ func pathExist(path string) bool {
 }
 
 func (service *WebService) webServ(ln net.Listener) {
-	serv := &http.Server{ Handler: service.handler }
+	serv := &http.Server{
+		Handler: service.handler,
+		ConnState: func(conn net.Conn, state http.ConnState) {
+			switch state {
+			case http.StateNew:
+				fmt.Printf("New connection from %s\r\n", conn.RemoteAddr())
+				connCountInc()
+				break
+			case http.StateActive:
+				fmt.Printf("The connection is actived from %s\r\n", conn.RemoteAddr())
+				break
+			case http.StateIdle:
+				fmt.Printf("The connection is idle from %s\r\n", conn.RemoteAddr())
+				break
+			case http.StateClosed:
+				fmt.Printf("The connection closed from %s\r\n", conn.RemoteAddr())
+				connCountDec();
+				break
+			case http.StateHijacked:
+				fmt.Printf("The connection is hijacked from %s\r\n", conn.RemoteAddr())
+				connCountDec();
+				break
+			default:
+				fmt.Printf("Other connection status=%d\r\n", int(http.StateNew))
+				break
+			}
+		},
+	}
 	service.webServs = append(service.webServs, serv)
 
 	if len(TlsCertFile) > 0 && len(TlsKeyFile) > 0 &&
