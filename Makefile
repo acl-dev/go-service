@@ -1,4 +1,4 @@
 ll: test
 
 test:
-	go test -v -race ./service
+	go test -v -race .
