@@ -40,11 +40,11 @@ func startServer(listener net.Listener)  {
 			ConnState: func(conn net.Conn, state http.ConnState) {
 				switch state {
 				case http.StateNew:
-					master.ConnCountInc()
+					//master.ConnCountInc()
 					break
 				case http.StateClosed:
 				case http.StateHijacked:
-					master.ConnCountDec()
+					//master.ConnCountDec()
 					break
 				default:
 					break
