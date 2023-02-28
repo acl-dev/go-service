@@ -4,16 +4,24 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 
 	"github.com/acl-dev/master-go"
 )
 
-func handler(w http.ResponseWriter, _ *http.Request) {
+func rootHandler(w http.ResponseWriter, _ *http.Request) {
 	//fmt.Println("served", r.URL)
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.Header().Set("Server", "go-httpd")
-	_, _ = fmt.Fprintf(w, "Hello World!\r\n")
+	_, _ = fmt.Fprintf(w, "Hello World for access root path!\r\n")
+}
+
+func testHandler(w http.ResponseWriter, _ *http.Request) {
+	//fmt.Println("served", r.URL)
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.Header().Set("Server", "go-httpd")
+	_, _ = fmt.Fprintf(w, "Hello World for access test path!\r\n")
 }
 
 var (
@@ -35,7 +43,8 @@ func main() {
 		master.ServiceType, master.AppConf.GetString("test_src"),
 		master.AppConf.GetBool("test_bool"))
 
-	http.HandleFunc("/", handler)
+	http.HandleFunc("/", rootHandler)
+	http.HandleFunc("/test", testHandler)
 
 	if master.Alone {
 		fmt.Println("listen:", listenAddrs)
@@ -52,6 +61,12 @@ func main() {
 	if err != nil {
 		log.Println("Init webservice failed:", err)
 	} else {
+		service.AcceptHandler = func(conn net.Conn) {
+			fmt.Printf("Connection from %s\r\n", conn.RemoteAddr())
+		}
+		service.CloseHandler = func(conn net.Conn) {
+			fmt.Printf("Disconnect from %s\r\n", conn.RemoteAddr())
+		}
 		service.Run()
 	}
 }

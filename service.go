@@ -411,19 +411,19 @@ func monitorMaster(listeners []net.Listener,
 	}
 }
 
-func connCountInc() {
+func ConnCountInc() {
 	connMutex.Lock()
 	connCount++
 	connMutex.Unlock()
 }
 
-func connCountDec() {
+func ConnCountDec() {
 	connMutex.Lock()
 	connCount--
 	connMutex.Unlock()
 }
 
-func connCountCur() int {
+func ConnCountCur() int {
 	connMutex.RLock()
 	n := connCount
 	connMutex.RUnlock()

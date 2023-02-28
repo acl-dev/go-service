@@ -23,19 +23,17 @@ func (service *TcpService) handleConn(conn net.Conn) {
 		panic("acceptHandler nil")
 	}
 
-	connCountInc()
+	ConnCountInc()
 
 	service.AcceptHandler(conn)
 
 	if service.CloseHandler != nil {
 		service.CloseHandler(conn)
-	} else {
-		log.Println("closeHandler nil")
 	}
 
 	_ = conn.Close()
 
-	connCountDec()
+	ConnCountDec()
 }
 
 func (service *TcpService) loopAccept(ln net.Listener) {

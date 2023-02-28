@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/http"
 	"sync"
 
 	"github.com/acl-dev/master-go"
@@ -33,7 +34,24 @@ func startServer(listener net.Listener)  {
 		})
 
 		log.Printf("Listen on %s", listener.Addr())
-		_ = e.RunListener(listener)
+		//_ = e.RunListener(listener)
+		server := &http.Server{
+			Handler: e,
+			ConnState: func(conn net.Conn, state http.ConnState) {
+				switch state {
+				case http.StateNew:
+					master.ConnCountInc()
+					break
+				case http.StateClosed:
+				case http.StateHijacked:
+					master.ConnCountDec()
+					break
+				default:
+					break
+				}
+			},
+		}
+		server.Serve(listener)
 	}()
 }
 

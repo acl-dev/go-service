@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-
 	"github.com/acl-dev/master-go"
 )
 

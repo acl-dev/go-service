@@ -1,7 +1,6 @@
 package master
 
 import (
-	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -12,6 +11,8 @@ type WebService struct {
 	listeners []net.Listener
 	webServs []*http.Server
 	handler http.Handler
+	AcceptHandler AcceptFunc
+	CloseHandler  CloseFunc
 }
 
 func pathExist(path string) bool {
@@ -28,25 +29,28 @@ func (service *WebService) webServ(ln net.Listener) {
 		ConnState: func(conn net.Conn, state http.ConnState) {
 			switch state {
 			case http.StateNew:
-				fmt.Printf("New connection from %s\r\n", conn.RemoteAddr())
-				connCountInc()
+				ConnCountInc()
+				if service.AcceptHandler != nil {
+					service.AcceptHandler(conn)
+				}
 				break
 			case http.StateActive:
-				fmt.Printf("The connection is actived from %s\r\n", conn.RemoteAddr())
 				break
 			case http.StateIdle:
-				fmt.Printf("The connection is idle from %s\r\n", conn.RemoteAddr())
 				break
 			case http.StateClosed:
-				fmt.Printf("The connection closed from %s\r\n", conn.RemoteAddr())
-				connCountDec();
+				ConnCountDec()
+				if service.CloseHandler != nil {
+					service.CloseHandler(conn)
+				}
 				break
 			case http.StateHijacked:
-				fmt.Printf("The connection is hijacked from %s\r\n", conn.RemoteAddr())
-				connCountDec();
+				ConnCountDec();
+				if service.CloseHandler != nil {
+					service.CloseHandler(conn)
+				}
 				break
 			default:
-				fmt.Printf("Other connection status=%d\r\n", int(http.StateNew))
 				break
 			}
 		},
