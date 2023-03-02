@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"github.com/acl-dev/go-service"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -53,7 +52,7 @@ func (s *server) GetMessage(ctx context.Context, in *pb.MessageRequest) (*pb.Mes
 }
 
 func startServer(ln net.Listener) {
-	fmt.Println("Listen on:", ln.Addr())
+	log.Println("Listen on:", ln.Addr())
 
 	go func() {
 		defer g.Done()
@@ -62,7 +61,7 @@ func startServer(ln net.Listener) {
 		pb.RegisterGreetsServer(s, &server{})
 		reflection.Register(s)
 		if err := s.Serve(ln); err != nil {
-			fmt.Println("start server error", err)
+			log.Println("start server error", err)
 		}
 	}()
 }
