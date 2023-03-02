@@ -46,11 +46,15 @@ service gin-server {
 	master_command = {install_path}/sbin/gin-server
 #	进程日志记录文件
 	master_log = {install_path}/var/log/gin-server.log
+#   程序标准输出重定向至指定文件中
+    master_stdout = {install_path}/var/log/go-httpd.stdout
+#   程序错误输出重定向至指定文件中
+    master_stderr = {install_path}/var/log/go-httpd.stderr
 #	进程运行时的用户身份
-	master_owner = root
+#	master_owner = root
 #	master_owner = nobody
 #	调试日志方式，格式：tag:level; tag:level; tab:level, 如：all:1; 101:2
-#	master_debug =
+#	master_debug = -u
 #	进程启动参数
 #	master_args =
 #	传递给服务子进程的环境变量, 可以通过 getenv("SERVICE_ENV") 获得此值

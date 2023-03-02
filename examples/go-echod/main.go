@@ -3,9 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/acl-dev/go-service"
 	"log"
 	"net"
-	"github.com/acl-dev/go-service"
 )
 
 func onAccept(conn net.Conn) {
@@ -50,21 +50,21 @@ func main() {
 		master.AppConf.GetBool("test_bool"))
 
 	/*
-	master.OnClose(onClose)
-	master.OnAccept(onAccept)
+		master.OnClose(onClose)
+		master.OnAccept(onAccept)
 
-	var err error
-	if master.Alone {
-		fmt.Printf("listen: %s\r\n", listenAddrs)
-		err = master.TcpAloneStart(listenAddrs)
-	} else {
-		// daemon mode in master framework
-		err = master.TcpDaemonStart()
-	}
-	if err != nil {
-		log.Println("start tcp server error:", err)
-	}
-    */
+		var err error
+		if master.Alone {
+			fmt.Printf("listen: %s\r\n", listenAddrs)
+			err = master.TcpAloneStart(listenAddrs)
+		} else {
+			// daemon mode in master framework
+			err = master.TcpDaemonStart()
+		}
+		if err != nil {
+			log.Println("start tcp server error:", err)
+		}
+	*/
 
 	// Bind the given addresses from commandline or from master framework.
 	service, err := master.TcpServiceInit(listenAddrs)

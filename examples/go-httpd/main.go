@@ -51,13 +51,13 @@ func main() {
 	}
 
 	/*
-	err := master.WebServiceStart(*listenAddrs, nil)
-	if err != nil {
-		log.Println("Start webserver failed:", err)
-	}
+		err := master.WebServiceStart(*listenAddrs, nil)
+		if err != nil {
+			log.Println("Start webserver failed:", err)
+		}
 	*/
 
-	service, err := master.WebServiceInit(*listenAddrs, nil);
+	service, err := master.WebServiceInit(*listenAddrs, nil)
 	if err != nil {
 		log.Println("Init webservice failed:", err)
 	} else {
@@ -67,6 +67,8 @@ func main() {
 		service.CloseHandler = func(conn net.Conn) {
 			fmt.Printf("Disconnect from %s\r\n", conn.RemoteAddr())
 		}
+
+		// Start the webservices now.
 		service.Run()
 	}
 }

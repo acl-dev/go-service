@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"sync"
 	"time"
 )
 
@@ -48,27 +49,36 @@ func (service *TcpService) loopAccept(ln net.Listener) {
 		go service.handleConn(conn)
 	}
 
+	// Which is inited and changed in service.go, when the monitorMaster
+	// fiber testing the disconnecting with acl_master, the stopping will
+	// be set true and the listeners will all be closed there.
 	if stopping {
 		log.Println("server stopping")
 	} else {
-		log.Println("server listen error")
-		tcpStop(false)
+		log.Println("server failed")
 	}
 }
 
-func (service *TcpService) Run()  {
+func (service *TcpService) Run() {
+	var g sync.WaitGroup
+	g.Add(len(service.listeners))
+
 	for _, ln := range service.listeners {
-		// create fiber for each listener to accept connections
-		go service.loopAccept(ln)
+		// Create fiber for each listener to accept connections.
+		go func(l net.Listener) {
+			defer g.Done()
+
+			service.loopAccept(l)
+		}(ln)
 	}
 
 	log.Println("service started!")
 
-	// waiting for service stopped
-	res := <-doneChan
+	// Waiting for service been stopped called in service.go
+	res := Wait()
 
-	close(doneChan)
-	doneChan = nil
+	// Waiting all services done.
+	g.Wait()
 
 	if exitHandler != nil {
 		exitHandler()
@@ -82,12 +92,12 @@ func (service *TcpService) Run()  {
 }
 
 func TcpServiceInit(addrs string) (*TcpService, error) {
-	listeners, err := ServiceInit(addrs, tcpStop)
+	listeners, err := ServiceInit(addrs)
 	if err != nil {
 		log.Println("ServiceInit failed:", err)
 		return nil, err
 	}
-	return &TcpService{ listeners: listeners }, nil
+	return &TcpService{listeners: listeners}, nil
 }
 
 var (
@@ -130,12 +140,4 @@ func TcpServiceStart(addrs string) error {
 	service.AcceptHandler = acceptHandler
 	service.Run()
 	return nil
-}
-
-// callback when service stopped, be called in service.go
-func tcpStop(ok bool) {
-	if doneChan != nil {
-		// notify the main fiber to exit now
-		doneChan <- ok
-	}
 }

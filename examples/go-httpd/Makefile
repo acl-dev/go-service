@@ -1,5 +1,5 @@
 all:
-	@(go build -o go-httpd)
+	@(go mod tidy; go build -o go-httpd)
 
 clean:
 	@(rm -f go-httpd)

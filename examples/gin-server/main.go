@@ -13,15 +13,15 @@ import (
 )
 
 var (
-	listenAddrs string	// the server's listening addrs in alone mode.
+	listenAddrs string // the server's listening addrs in alone mode.
 )
 
 var (
-	g sync.WaitGroup	// Used to wait for service to stop.
+	g sync.WaitGroup // Used to wait for service to stop.
 )
 
 // Start one fiber server for one listener which is a webserver.
-func startServer(listener net.Listener)  {
+func startServer(listener net.Listener) {
 	go func() {
 		defer g.Done()
 
@@ -61,14 +61,14 @@ func startServer(listener net.Listener)  {
 	}()
 }
 
-func parseArgs()  {
+func parseArgs() {
 	flag.StringVar(&listenAddrs, "listen", "127.0.0.1:28880, 127.0.0.1:28881",
 		"Listen addr in alone running")
 
 	flag.Parse()
 }
 
-func main()  {
+func main() {
 	fmt.Println("Current master-go version:", master.Version)
 
 	// parse args from commandline or acl_master's exec
@@ -82,7 +82,7 @@ func main()  {
 	// the listeners' fds were created by acl_master and transfered to the
 	// children processes after fork/exec.
 
-	listener, err = master.ServiceInit(listenAddrs, onStop)
+	listener, err = master.ServiceInit(listenAddrs)
 	if err != nil {
 		log.Println("Listen error:", err)
 		return
@@ -106,10 +106,4 @@ func main()  {
 	g.Wait()
 
 	log.Println("gin-server: All services stopped!")
-}
-
-// The callback used in master.ServiceInit() for the second arg, when the server
-// is to being stopped, the callback will be called.
-func onStop(bool) {
-	log.Println("gin-server: Disconnect from acl_master!")
 }

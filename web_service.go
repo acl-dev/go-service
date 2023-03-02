@@ -5,12 +5,13 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"sync"
 )
 
 type WebService struct {
-	listeners []net.Listener
-	webServs []*http.Server
-	handler http.Handler
+	listeners     []net.Listener
+	webServs      []*http.Server
+	handler       http.Handler
 	AcceptHandler AcceptFunc
 	CloseHandler  CloseFunc
 }
@@ -45,7 +46,7 @@ func (service *WebService) webServ(ln net.Listener) {
 				}
 				break
 			case http.StateHijacked:
-				ConnCountDec();
+				ConnCountDec()
 				if service.CloseHandler != nil {
 					service.CloseHandler(conn)
 				}
@@ -55,6 +56,7 @@ func (service *WebService) webServ(ln net.Listener) {
 			}
 		},
 	}
+
 	service.webServs = append(service.webServs, serv)
 
 	if len(TlsCertFile) > 0 && len(TlsKeyFile) > 0 &&
@@ -68,36 +70,46 @@ func (service *WebService) webServ(ln net.Listener) {
 
 // WebServiceStart start WEB service with the specified listening addrs
 func (service *WebService) Run() {
+	var g sync.WaitGroup // Used to wait for service to stop.
+
+	g.Add(len(service.listeners))
+
 	for _, ln := range service.listeners {
-		// create fiber for each listener to accept connections
-		go service.webServ(ln)
+		// Create fiber for each listener to accept client connection.
+		go func(l net.Listener) {
+			defer g.Done()
+
+			service.webServ(l)
+		}(ln)
 	}
 
 	log.Println("webservice started!")
-	res := <-doneChan
 
-	close(doneChan)
-	doneChan = nil
+	// Call Wait() in service.go to wait the end of the service.
+	res := Wait()
+
+	// Waiting all the web listening services done.
+	g.Wait()
 
 	if exitHandler != nil {
 		exitHandler()
 	}
 
 	if res {
-		log.Println("webservice stopped normal!")
+		log.Printf("pid=%d: webservice stopped normal!\r\n", os.Getpid())
 	} else {
-		log.Println("webservice stopped abnormal!")
+		log.Printf("pid=%d, webservice stopped abnormal!\r\n", os.Getpid())
 	}
 }
 
 func WebServiceInit(addrs string, handler http.Handler) (*WebService, error) {
-	listeners, err := ServiceInit(addrs, webStop)
+	listeners, err := ServiceInit(addrs)
 	if err != nil {
 		log.Println("ServiceInit failed:", err)
 		return nil, err
 	}
 
-	return &WebService { listeners: listeners, handler: handler }, nil
+	return &WebService{listeners: listeners, handler: handler}, nil
 }
 
 // WebServiceStart start WEB service with the specified listening addrs
@@ -129,9 +141,3 @@ func onWebStop() {
 	wg.Wait()
 }
 */
-
-func webStop(n bool) {
-	if doneChan != nil {
-		doneChan <- n
-	}
-}

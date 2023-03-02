@@ -4,28 +4,28 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/acl-dev/go-service"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 	"log"
 	"net"
 	"strconv"
 	"sync"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
-	"github.com/acl-dev/go-service"
 
 	"grpc/pb"
 )
 
 var (
-	listenAddrs = ":8885"	// the server's listening addrs in alone mode.
+	listenAddrs = ":8885" // the server's listening addrs in alone mode.
 )
 
 var (
-	g sync.WaitGroup		// Used to wait for service to stop.
+	g sync.WaitGroup // Used to wait for service to stop.
 )
 
-type server struct {}
+type server struct{}
 
-func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error)  {
+func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
 	name := "Hello "
 	name += in.Name
 
@@ -34,7 +34,7 @@ func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloRe
 		message += *in.Message
 	}
 
-	return &pb.HelloReply{ Name: &name, Message: &message }, nil
+	return &pb.HelloReply{Name: &name, Message: &message}, nil
 }
 
 func (s *server) GetMessage(ctx context.Context, in *pb.MessageRequest) (*pb.MessageReply, error) {
@@ -49,10 +49,10 @@ func (s *server) GetMessage(ctx context.Context, in *pb.MessageRequest) (*pb.Mes
 		message += strconv.Itoa(int(*in.Min))
 	}
 
-	return &pb.MessageReply{ Message: message }, nil
+	return &pb.MessageReply{Message: message}, nil
 }
 
-func startServer(ln net.Listener)  {
+func startServer(ln net.Listener) {
 	fmt.Println("Listen on:", ln.Addr())
 
 	go func() {
@@ -79,7 +79,7 @@ func main() {
 	// the listeners' fds were created by acl_master and transfered to the
 	// children processes after fork/exec.
 
-	listener, err = master.ServiceInit(listenAddrs, onStop)
+	listener, err = master.ServiceInit(listenAddrs)
 	if err != nil {
 		log.Println("Listen error:", err)
 		return
@@ -99,8 +99,4 @@ func main() {
 	g.Wait()
 
 	log.Println("grpc server: All services stopped!")
-}
-
-func onStop(bool) {
-	log.Println("grpc server: Disconnect from acl_master!")
 }

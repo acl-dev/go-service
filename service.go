@@ -265,16 +265,20 @@ func GetListeners() ([]net.Listener, error) {
 
 		ln, err := net.FileListener(file)
 
+		//ff, _ := ln.(*net.TCPListener).File()
+		//f := ff.Fd()
+		//log.Printf("curr fd=%d, old fd=%d\r\n", f, fd)
+
 		// fd will be dupped in FileListener, so we should close it
 		// after the listener is created
 		_ = file.Close()
 
 		if err == nil {
 			listeners = append(listeners, ln)
-			log.Printf("add fd %d ok", fd)
-			continue
+			log.Printf("add fd %d ok\r\n", fd)
+		} else {
+			log.Printf("Create FileListener error=\"%s\", fd=%d\r\n", err, fd)
 		}
-		log.Println(fmt.Sprintf("Create FileListener error=\"%s\", fd=%d", err, fd))
 	}
 
 	if len(listeners) == 0 {
@@ -286,7 +290,7 @@ func GetListeners() ([]net.Listener, error) {
 	return listeners, nil
 }
 
-func ServiceInit(addrs string, stopHandler func(bool)) ([]net.Listener, error) {
+func ServiceInit(addrs string) ([]net.Listener, error) {
 	Prepare()
 
 	if preJailHandler != nil {
@@ -341,42 +345,37 @@ func ServiceInit(addrs string, stopHandler func(bool)) ([]net.Listener, error) {
 	// monitoring the status with the acl_master framework. If disconnected
 	// from acl_master, the current child process will exit.
 	if daemonMode {
-		go monitorMaster(listeners, nil, stopHandler)
+		go monitorMaster(listeners)
 	}
 	return listeners, nil
 }
 
 // monitorMaster monitor the PIPE IPC between the current process and acl_master,
-// when acl_master close thePIPE, the current process should exit after
+// when acl_master close the PIPE, the current process should exit after
 // which has handled all its tasks
-func monitorMaster(listeners []net.Listener,
-	onStopHandler func(), stopHandler func(bool)) {
+func monitorMaster(listeners []net.Listener) {
 
 	file := os.NewFile(uintptr(stateFd), "")
 	conn, err := net.FileConn(file)
 	if err != nil {
-		panic(fmt.Sprintf("FileConn error=%s", err))
+		panic(fmt.Sprintf("pid=%d: FileConn error=%s", os.Getpid(), err))
 	}
 
-	log.Println("Waiting for master exiting ...")
+	log.Printf("pid=%d: waiting for master exiting...\r\n", os.Getpid())
 
 	buf := make([]byte, 1024)
 	_, err = conn.Read(buf)
 	if err != nil {
-		log.Println("Disconnected from master", err)
+		log.Printf("pid=%d: disconnected from master err=%s", os.Getpid(), err.Error())
 	}
 
+	// Set the stopping flag which'll be checked in the end of the service.
 	stopping = true
 
-	if onStopHandler != nil {
-		onStopHandler()
-	} else {
-		// XXX: force stopping listen again
-		for _, ln := range listeners {
-			log.Println("Closing one listener ", ln.Addr())
-			_ = ln.Close()
-			log.Println("close ok")
-		}
+	// XXX: Force stopping listen.
+	for _, ln := range listeners {
+		log.Printf("pid=%d: closing listener: %s\r\n", os.Getpid(), ln.Addr())
+		_ = ln.Close()
 	}
 
 	var n, i int
@@ -384,13 +383,11 @@ func monitorMaster(listeners []net.Listener,
 	i = 0
 
 	if AppQuickAbort {
-		log.Println("app_quick_abort been set")
+		log.Printf("pid=%d: app_quick_abort been set", os.Getpid())
 	} else {
-		log.Println("-----1----")
 		for {
 			connMutex.RLock()
 			if connCount <= 0 {
-				log.Println("-----2----")
 				connMutex.RUnlock()
 				break
 			}
@@ -399,18 +396,33 @@ func monitorMaster(listeners []net.Listener,
 			connMutex.RUnlock()
 			time.Sleep(time.Second) // sleep 1 second
 			i++
-			log.Printf("Exiting, clients=%d, sleep=%d seconds\r\n", n, i)
+			log.Printf("pid=%d: exiting, clients=%d, sleep=%d seconds\r\n",
+				os.Getpid(), n, i)
 			if AppWaitLimit > 0 && i >= AppWaitLimit {
-				log.Printf("Waiting too long >= %d", AppWaitLimit)
+				log.Printf("waiting too long >= %d", AppWaitLimit)
 				break
 			}
 		}
 	}
 
-	log.Println("master service disconnected, exiting now")
+	log.Printf("pid=%d: master service disconnected, exit now\r\n", os.Getpid())
+	Stop(true)
+}
 
-	if stopHandler != nil {
-		stopHandler(true)
+func Stop(ok bool) {
+	if doneChan != nil {
+		doneChan <- ok
+	}
+}
+
+func Wait() bool {
+	if doneChan != nil {
+		res := <-doneChan
+		close(doneChan)
+		doneChan = nil
+		return res
+	} else {
+		return true
 	}
 }
 
