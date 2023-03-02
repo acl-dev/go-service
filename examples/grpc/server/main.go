@@ -95,7 +95,10 @@ func main() {
 
 	log.Println("grpc server: Wait for services stop ...")
 
-	// Wait for all listeners to stop.
+	// Waiting for disconnect from acl_Master.
+	master.Wait()
+
+	// Wait for all listeners done.
 	g.Wait()
 
 	log.Println("grpc server: All services stopped!")
