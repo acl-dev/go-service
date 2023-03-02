@@ -69,7 +69,7 @@ func parseArgs() {
 }
 
 func main() {
-	fmt.Println("Current master-go version:", master.Version)
+	fmt.Println("Current go-service's version:", master.Version)
 
 	// parse args from commandline or acl_master's exec
 	parseArgs()
