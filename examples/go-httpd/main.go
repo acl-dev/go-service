@@ -7,7 +7,7 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/acl-dev/master-go"
+	"github.com/acl-dev/go-service"
 )
 
 func rootHandler(w http.ResponseWriter, _ *http.Request) {

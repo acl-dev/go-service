@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/acl-dev/master-go"
+	"github.com/acl-dev/go-service"
 	"log"
 	"net/http"
 )

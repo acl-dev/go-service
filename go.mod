@@ -1,4 +1,4 @@
-module github.com/acl-dev/master-go
+module github.com/acl-dev/go-service
 
 go 1.16
 

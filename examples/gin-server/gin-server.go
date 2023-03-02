@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/acl-dev/master-go"
+	"github.com/acl-dev/go-service"
 	"github.com/gin-gonic/gin"
 )
 

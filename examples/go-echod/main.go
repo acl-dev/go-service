@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"github.com/acl-dev/master-go"
+	"github.com/acl-dev/go-service"
 )
 
 func onAccept(conn net.Conn) {

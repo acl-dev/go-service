@@ -10,7 +10,7 @@ import (
 	"sync"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
-	"github.com/acl-dev/master-go"
+	"github.com/acl-dev/go-service"
 
 	"grpc/pb"
 )
