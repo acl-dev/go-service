@@ -375,6 +375,7 @@ func monitorMaster(listeners []net.Listener,
 		for _, ln := range listeners {
 			log.Println("Closing one listener ", ln.Addr())
 			_ = ln.Close()
+			log.Println("close ok")
 		}
 	}
 
@@ -385,9 +386,11 @@ func monitorMaster(listeners []net.Listener,
 	if AppQuickAbort {
 		log.Println("app_quick_abort been set")
 	} else {
+		log.Println("-----1----")
 		for {
 			connMutex.RLock()
 			if connCount <= 0 {
+				log.Println("-----2----")
 				connMutex.RUnlock()
 				break
 			}
