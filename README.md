@@ -1,4 +1,4 @@
-# master-go
+# go-service
 
 go 语言开发的服务器模板，可与 acl_master 服务器框架深度集成。
 
@@ -12,7 +12,7 @@ go 语言开发的服务器模板，可与 acl_master 服务器框架深度集�
 * [三、参考](#三参考)
 ## 一、安装
 ```
-	go get -u github.com/acl-dev/master-go
+	go get -u github.com/acl-dev/go-service
 ```
 
 ## 二、使用
@@ -28,7 +28,7 @@ import (
     "log"
     "net"
 
-    "github.com/acl-dev/master-go"
+    "github.com/acl-dev/go-service"
 )
 
 func onAccept(conn net.Conn) {
@@ -109,11 +109,11 @@ $ ./echod -alone
 当 RPM 安装后 acl_master 服务管理程序会自动启动。
 
 #### 2.2.2 部署 Go 服务程序至 acl_master 框架下
-首先下载 master-go 软件包并编译其中的服务示例，然后安装这些服务程序：
+首先下载 go-service 软件包并编译其中的服务示例，然后安装这些服务程序：
 
 ```
-#go get -u github.com/acl-dev/master-go
-#cd $GOPATH/src/github.com/acl-dev/master-go/examples/
+#go get -u github.com/acl-dev/go-service
+#cd $GOPATH/src/github.com/acl-dev/go-service/examples/
 #(cd go-echod; go build; ./setup.sh /opt/soft/go-echod)
 #(cd go-httpd; go build; ./setup.sh /opt/soft/go-httpd)
 #(cd gin-server; go get; go build; ./setup.sh /opt/soft/gin-server)
@@ -123,7 +123,7 @@ $ ./echod -alone
 ```
 通过启动脚本分别启动这几个服务例子，启动脚本实际上是通知 **`acl_master`** 服务程序来启动这几个服务程序。  
 
-其中的示例 <a href=https://github.com/acl-dev/master-go/tree/master/examples/gin-server target=_blank> gin-server </a> 是使用 <a href=https://github.com/gin-gonic/gin target=_blank> gin </a> 编写的一个简单的 Go web 服务。  
+其中的示例 <a href=https://github.com/acl-dev/go-service/tree/master/examples/gin-server target=_blank> gin-server </a> 是使用 <a href=https://github.com/gin-gonic/gin target=_blank> gin </a> 编写的一个简单的 Go web 服务。  
 
 最后运行 **`acl_master`** 服务框架中的管理工具来查看由 **`acl_master`** 管理的服务：
 ```
@@ -156,4 +156,4 @@ hello world!
 在 **`acl_master`** 的运行机制下，可以完美解决以上二者的矛盾。
 
 ## 三、参考
-更多请参考 [examples](https://github.com/acl-dev/master-go/tree/master/examples/)
+更多请参考 [examples](https://github.com/acl-dev/go-service/tree/master/examples/)
