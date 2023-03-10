@@ -34,25 +34,14 @@ func (service *WebService) webServ(ln net.Listener) {
 				if service.AcceptHandler != nil {
 					service.AcceptHandler(conn)
 				}
-				break
 			case http.StateActive:
-				break
 			case http.StateIdle:
-				break
-			case http.StateClosed:
+			case http.StateClosed, http.StateHijacked:
 				ConnCountDec()
 				if service.CloseHandler != nil {
 					service.CloseHandler(conn)
 				}
-				break
-			case http.StateHijacked:
-				ConnCountDec()
-				if service.CloseHandler != nil {
-					service.CloseHandler(conn)
-				}
-				break
 			default:
-				break
 			}
 		},
 	}
