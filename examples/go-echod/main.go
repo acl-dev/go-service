@@ -6,11 +6,30 @@ import (
 	"github.com/acl-dev/go-service"
 	"log"
 	"net"
+	"time"
+)
+
+var (
+	listenAddrs  string
+	readTimeout  = -1
+	writeTimeout = -1
 )
 
 func onAccept(conn net.Conn) {
 	buf := make([]byte, 8192)
 	for {
+		if readTimeout > 0 {
+			err := conn.SetReadDeadline(time.Now().Add(time.Duration(readTimeout) * time.Second))
+			if err != nil {
+				return
+			}
+		}
+		if writeTimeout > 0 {
+			err := conn.SetWriteDeadline(time.Now().Add(time.Duration(writeTimeout) * time.Second))
+			if err != nil {
+				return
+			}
+		}
 		n, err := conn.Read(buf)
 		if err != nil {
 			fmt.Println("read over", err)
@@ -29,15 +48,13 @@ func onClose(conn net.Conn) {
 	log.Println("---client onClose---", conn.RemoteAddr())
 }
 
-var (
-	listenAddrs string
-)
-
 func main() {
 	fmt.Println("Current go-service's version:", master.Version)
 
 	flag.StringVar(&listenAddrs, "listen", "127.0.0.1:28880, 127.0.0.1:28881",
 		"listen addr in alone running")
+	flag.IntVar(&readTimeout, "r", -1, "read timeout")
+	flag.IntVar(&writeTimeout, "w", -1, "write timeout")
 
 	// Parse the commandline args.
 	flag.Parse()
