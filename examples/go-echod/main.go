@@ -6,6 +6,7 @@ import (
 	"github.com/acl-dev/go-service"
 	"log"
 	"net"
+	"runtime"
 	"time"
 )
 
@@ -13,6 +14,7 @@ var (
 	listenAddrs  string
 	readTimeout  = -1
 	writeTimeout = -1
+	numCPUs      = -1
 )
 
 func onAccept(conn net.Conn) {
@@ -51,6 +53,7 @@ func onClose(conn net.Conn) {
 func main() {
 	fmt.Println("Current go-service's version:", master.Version)
 
+	flag.IntVar(&numCPUs, "cpus", runtime.NumCPU(), "Number of CPUs to use")
 	flag.StringVar(&listenAddrs, "listen", "127.0.0.1:28880, 127.0.0.1:28881",
 		"listen addr in alone running")
 	flag.IntVar(&readTimeout, "r", -1, "read timeout")
@@ -58,6 +61,10 @@ func main() {
 
 	// Parse the commandline args.
 	flag.Parse()
+
+	if numCPUs > 0 {
+		runtime.GOMAXPROCS(numCPUs)
+	}
 
 	// Parse commandline args needed internal, load configure info.
 	master.Prepare()
